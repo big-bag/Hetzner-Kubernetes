@@ -1,11 +1,10 @@
 # Requirements
-Install with CLI:
-  - the Hetzner Cloud Collection
+Install collections with CLI
 ```
 ansible-galaxy collection install -r requirements.yml
 ```
 
-Install requirements for dynamic inventory
+Install requirements for [dynamic inventory](https://docs.ansible.com/ansible/latest/collections/hetzner/hcloud/hcloud_inventory.html "Ansible dynamic inventory plugin for the Hetzner Cloud")
 ```
 sudo apt install -y python3-pip
 pip3 --version
@@ -18,7 +17,7 @@ pip3 install hcloud
 # Inventory
 Display inventory
 ```
-ansible-inventory -i hosts.hcloud.yml --graph
+ansible-inventory -i hcloud.yml --graph
 ```
 
 To specify connection parameters there are two options:
@@ -67,7 +66,7 @@ $ cat ansible.cfg
 inventory      = $PWD/hcloud.yml
 ```
 ```
-$ cat hosts.hcloud.yml
+$ cat hcloud.yml
 ---
 plugin: hcloud
 token: [TOKEN]

@@ -1,1 +1,3 @@
-inventory/hcloud.yml
+hcloud.yml
+.vault_password
+group_vars/all/vault.yml
