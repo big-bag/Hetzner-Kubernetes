@@ -85,3 +85,6 @@ ansible-inventory --list
 ansible all -m ping
 ansible-playbook ping.yml
 ```
+
+# Useful links
+http://mrtango.planetcrazy.de/ansible-add-an-empty-line-before-a-blockinfile.html

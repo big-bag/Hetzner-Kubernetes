@@ -1,0 +1,21 @@
+---
+- name: disable login under root
+  ansible.builtin.replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin yes$'
+    replace: 'PermitRootLogin no'
+    backup: yes
+
+- name: limit users who can login and disable protocol v1
+  ansible.builtin.blockinfile:
+    path: /etc/ssh/sshd_config
+    block: |
+      AllowUsers {{ item.name[0] | join(' ') }}
+      Protocol 2
+  loop: "{{ users }}"
+
+- name: insert an empty line before the marker line
+  ansible.builtin.replace:
+    path: /etc/ssh/sshd_config
+    regexp: '(?<=.\n)# BEGIN ANSIBLE MANAGED BLOCK$'
+    replace: '\n# BEGIN ANSIBLE MANAGED BLOCK'
