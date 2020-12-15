@@ -5,4 +5,5 @@ ansible_ssh_private_key_file: ~/.ssh/id_rsa
 users:
   - name: "{{ vault_name }}"
     comment: "{{ vault_comment }}"
+    password: "{{ vault_password }}"
     id_rsa_pub: "{{ vault_id_rsa_pub }}"
