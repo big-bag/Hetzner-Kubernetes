@@ -7,3 +7,5 @@ users:
     comment: "{{ vault_comment }}"
     password: "{{ vault_password }}"
     id_rsa_pub: "{{ vault_id_rsa_pub }}"
+
+ssh_port: "{{ vault_ssh_port }}"
