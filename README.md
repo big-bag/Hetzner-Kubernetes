@@ -87,4 +87,9 @@ ansible-playbook ping.yml
 ```
 
 # Useful links
+
+https://community.hetzner.com/tutorials/howto-hcloud-ansible
+
 http://mrtango.planetcrazy.de/ansible-add-an-empty-line-before-a-blockinfile.html
+
+https://regex101.com/

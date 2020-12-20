@@ -11,7 +11,7 @@
   ansible.builtin.blockinfile:
     path: /etc/ssh/sshd_config
     block: |
-      AllowUsers {{ item.name[0] | join(' ') }}
+      AllowUsers {{ users | json_query('[*].name') | join(' ') }}
       Protocol 2
   loop: "{{ users }}"
   notify: restart sshd

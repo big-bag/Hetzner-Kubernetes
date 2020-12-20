@@ -4,4 +4,4 @@
   become: no
   gather_facts: no
   tasks:
-    - ping:
+    - ansible.builtin.ping:
