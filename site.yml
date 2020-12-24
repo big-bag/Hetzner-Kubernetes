@@ -1,26 +1,20 @@
 ---
-- name: bootstrap play
-  hosts:
-    - centos-2gb-hel1-1
-  ignore_unreachable: yes
-  remote_user: root
+- name: resources play
+  hosts: localhost
+  connection: local
+  gather_facts: no
   vars:
-    ansible_ssh_private_key_file: ~/.ssh/id_rsa
-  become: yes
-  gather_facts: yes
+    hcloud_token: "{{ vault_hcloud_token }}"
   roles:
-    - base
+    - resources
 
-- name: ping play
-  hosts:
-    - centos-2gb-hel1-1
-  remote_user: "{{ users | json_query('[*].name') | first }}"
+- name: bootstrap play
+  hosts: centos-2gb-hel1-1
+  remote_user: "{% if hostvars['localhost']['server'].changed %}root{% else %}{{ users | json_query('[*].name') | first }}{% endif %}"
   vars:
     ansible_ssh_private_key_file: ~/.ssh/id_rsa
-    ansible_port: "{{ ssh_port }}"
+    ansible_port: "{% if hostvars['localhost']['server'].changed %}22{% else %}{{ ssh_port }}{% endif %}"
   become: yes
-  gather_facts: yes
+  gather_facts: no
   roles:
     - base
-  tasks:
-    - ansible.builtin.ping:

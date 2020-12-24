@@ -1,0 +1,36 @@
+---
+- name: create a basic ssh_key
+  hetzner.hcloud.hcloud_ssh_key:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ item.name }}"
+    public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+  loop: "{{ users }}"
+
+- name: create a server with ssh key
+  hetzner.hcloud.hcloud_server:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ item.0.name }}"
+    server_type: cx11
+    image: centos-8
+    location: hel1
+    ssh_keys: [ "{{ item.1.name }}" ]
+  loop: "{{ servers|product(users)|list }}"
+  register: server
+
+- name: refresh inventory to ensure new instances exist in inventory
+  meta: refresh_inventory
+
+- name: delete a basic ssh_key
+  hetzner.hcloud.hcloud_ssh_key:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ item.name }}"
+    state: absent
+  loop: "{{ users }}"
+  tags: [ never, destroy ]
+
+- name: delete a server
+  hetzner.hcloud.hcloud_server:
+    api_token: "{{ hcloud_token }}"
+    name: centos-2gb-hel1-1
+    state: absent
+  tags: [ never, destroy ]

@@ -13,5 +13,5 @@
 - name: set authorized key
   ansible.posix.authorized_key:
     user: "{{ item.name }}"
-    key: "{{ item.id_rsa_pub }}"
+    key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
   loop: "{{ users }}"

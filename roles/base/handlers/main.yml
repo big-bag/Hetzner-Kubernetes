@@ -1,5 +1,2 @@
 ---
-- name: restart sshd
-  ansible.builtin.systemd:
-    state: restarted
-    name: sshd.service
+- import_tasks: ssh.yml
