@@ -14,82 +14,29 @@ pip3 install --upgrade pip
 pip3 install hcloud
 ```
 
-# Inventory
-Display inventory
+# Content of secret files
+`hcloud.yml`
 ```
-ansible-inventory -i hcloud.yml --graph
-```
-
-To specify connection parameters there are two options:
-
-1.
-```
-$ tree
-.
-├── ansible.cfg
-└── inventory
-    ├── hcloud.yml
-    └── vars.yml
-```
-```
-$ cat ansible.cfg
-[defaults]
-inventory      = $PWD/inventory
-```
-```
-$ cat inventory/hcloud.yml
 ---
 plugin: hcloud
-token: [TOKEN]
+token: [ token with read/write permissions generated in hetzner project: security -> api tokens ]
 ```
+
+`group_vars/all/vault.yml`
 ```
-$ cat inventory/vars.yml
 ---
-all:
-  vars:
-    ansible_user: [USER]
-    ansible_ssh_private_key_file: ~/.ssh/id_rsa
-```
+vault_hcloud_token: [ token with read/write permissions generated in hetzner project: security -> api tokens ]
 
-2.
-```
-$ tree
-.
-├── ansible.cfg
-├── group_vars
-│   └── all.yml
-└── hcloud.yml
-```
-```
-$ cat ansible.cfg
-[defaults]
-inventory      = $PWD/hcloud.yml
-```
-```
-$ cat hcloud.yml
----
-plugin: hcloud
-token: [TOKEN]
-```
-```
-$ cat group_vars/all.yml
----
-ansible_user: [USER]
-ansible_ssh_private_key_file: ~/.ssh/id_rsa
-```
+vault_name: [ username ]
+vault_comment: [ full name ]
+vault_password: [ password ]
 
-Display and check inventory
+vault_ssh_port: [ port which different from standard '22' ]
+
+vault_one_password_device_id: [ device id which displayed in ansible error output when login first time to 1password from play host ]
+vault_one_password_password: '[ password from 1password account ]'
+vault_one_password_sign_in_address: [ url of 1password website ]
+vault_one_password_email_address: [ email from 1password account ]
+vault_one_password_secret_key: [ secret key from 1password account ]
+vault_one_password_vault_name: [ vault name which will be created and where it will be stored secrets of servers from project ]
 ```
-ansible-inventory --graph
-ansible-inventory --list
-ansible all -m ping
-ansible-playbook ping.yml
-```
-
-# Useful links
-
-https://community.hetzner.com/tutorials/howto-hcloud-ansible
-
-http://mrtango.planetcrazy.de/ansible-add-an-empty-line-before-a-blockinfile.html
-
-https://regex101.com/

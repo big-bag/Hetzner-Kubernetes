@@ -1,0 +1,11 @@
+---
+- name: wait 40 seconds for target connection to become reachable/usable
+  ansible.builtin.wait_for_connection:
+    timeout: 40
+
+- import_tasks: users.yml
+- import_tasks: sudo.yml
+- import_tasks: ssh.yml
+
+- name: bring host(-s) back to play after failure (e.g., if one host was unreachable)
+  meta: clear_host_errors

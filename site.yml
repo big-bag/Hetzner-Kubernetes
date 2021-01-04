@@ -1,20 +1,9 @@
 ---
-- name: resources play
-  hosts: localhost
-  connection: local
-  gather_facts: no
-  vars:
-    hcloud_token: "{{ vault_hcloud_token }}"
-  roles:
-    - resources
+- name: include a play to create a basic ssh key and a server with ssh key
+  import_playbook: resources.yml
 
-- name: bootstrap play
-  hosts: centos-2gb-hel1-1
-  remote_user: "{% if hostvars['localhost']['server'].changed %}root{% else %}{{ users | json_query('[*].name') | first }}{% endif %}"
-  vars:
-    ansible_ssh_private_key_file: ~/.ssh/id_rsa
-    ansible_port: "{% if hostvars['localhost']['server'].changed %}22{% else %}{{ ssh_port }}{% endif %}"
-  become: yes
-  gather_facts: no
-  roles:
-    - base
+- name: include a play to create users and configure ssh; performed after the previous play, depends on it
+  import_playbook: connection.yml
+
+- name: include a play to configure server security; performed after the previous two plays, doesn't depend on them
+  import_playbook: security.yml

@@ -30,14 +30,15 @@
     replace: 'Port {{ ssh_port }}'
   notify: restart sshd
 
-- name: allow authentication only by private keys
+- name: allow authentication only by private keys (1/2)
   ansible.builtin.replace:
     path: /etc/ssh/sshd_config
     regexp: '^PasswordAuthentication yes$'
     replace: 'PasswordAuthentication no'
   notify: restart sshd
 
-- ansible.builtin.replace:
+- name: allow authentication only by private keys (2/2)
+  ansible.builtin.replace:
     path: /etc/ssh/sshd_config
     regexp: '^#(PubkeyAuthentication yes)$'
     replace: '\1'
@@ -50,14 +51,15 @@
     replace: 'LogLevel VERBOSE'
   notify: restart sshd
 
-- name: configure idle timeout interval
+- name: configure idle timeout interval (1/2)
   ansible.builtin.replace:
     path: /etc/ssh/sshd_config
     regexp: '^#ClientAliveInterval 0$'
     replace: 'ClientAliveInterval 300'
   notify: restart sshd
 
-- ansible.builtin.replace:
+- name: configure idle timeout interval (2/2)
+  ansible.builtin.replace:
     path: /etc/ssh/sshd_config
     regexp: '^#ClientAliveCountMax 3$'
     replace: 'ClientAliveCountMax 0'

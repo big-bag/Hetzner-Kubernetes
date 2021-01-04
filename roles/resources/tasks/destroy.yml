@@ -1,0 +1,42 @@
+---
+- name: delete item(-s) in 1password
+  block:
+    - name: sign in to a 1password account
+      shell: |
+        export OP_DEVICE="{{ one_password_device_id }}"
+        echo "{{ one_password_password }}" | op signin "{{ one_password_sign_in_address }}" "{{ one_password_email_address }}" "{{ one_password_secret_key }}" --raw
+      register: op_session_token
+      changed_when: False
+
+    - name: delete item(-s)
+      shell: |
+        export OP_SESSION_my="{{ op_session_token.stdout }}"
+        op delete item "{{ item.name }}" --vault "{{ one_password_vault_name }}"
+      loop: "{{ servers }}"
+      ignore_errors: True
+
+    - name: sign out from a 1password account (1/2)
+      shell: op signout --forget
+      changed_when: False
+
+    - name: sign out from a 1password account (2/2)
+      ansible.builtin.file:
+        path: $HOME/.config/op/config
+        state: absent
+      changed_when: False
+  delegate_to: localhost
+  become: no
+  run_once: True
+
+- name: delete a server
+  hetzner.hcloud.hcloud_server:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ item.name }}"
+    state: absent
+  loop: "{{ servers }}"
+
+- name: delete a basic ssh_key
+  hetzner.hcloud.hcloud_ssh_key:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ users | json_query('[*].name') | first }}"
+    state: absent

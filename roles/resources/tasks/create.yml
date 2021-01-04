@@ -1,0 +1,17 @@
+---
+- name: create a basic ssh key
+  hetzner.hcloud.hcloud_ssh_key:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ users | json_query('[*].name') | first }}"
+    public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+- name: create a server with ssh key
+  hetzner.hcloud.hcloud_server:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ item.name }}"
+    server_type: cx11
+    image: centos-8
+    location: hel1
+    ssh_keys: [ "{{ users | json_query('[*].name') | first }}" ]
+  loop: "{{ servers }}"
+  register: server
