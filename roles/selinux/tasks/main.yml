@@ -1,0 +1,9 @@
+---
+- name: disable selinux
+  ansible.posix.selinux:
+    state: disabled
+  register: selinux_config
+
+- name: reboot the machine to make selinux state change will take effect
+  ansible.builtin.reboot:
+  when: selinux_config.changed

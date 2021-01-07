@@ -7,3 +7,6 @@
 
 - name: include a play to configure server security; performed after the previous two plays, doesn't depend on them
   import_playbook: security.yml
+
+- name: include a play to configure common basic settings
+  import_playbook: base.yml

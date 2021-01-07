@@ -10,7 +10,7 @@
 - name: install services for iptables
   ansible.builtin.dnf:
     name: iptables-services
-  register: iptables_services
+  register: install_package
 
 - name: allow custom ssh port in default rules to access server in current session
   ansible.builtin.replace:
@@ -18,7 +18,7 @@
     regexp: '(.*\s+)22(\s+.*)?$'
     replace: '\1"{{ ssh_port }}"\2'
     backup: yes
-  when: iptables_services.changed
+  when: install_package.changed
 
 # the iptables service starts before copying the rules, because the rules for ssh only allow new connections (--ctstate NEW,ESTABLISHED)
 # if the iptables service will start with these rules, the connection to the server(-s) will be interrupted and the playbook will not be played to the end
