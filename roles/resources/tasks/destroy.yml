@@ -4,29 +4,29 @@
     - name: sign in to a 1password account
       shell: |
         export OP_DEVICE="{{ one_password_device_id }}"
-        echo "{{ one_password_password }}" | op signin "{{ one_password_sign_in_address }}" "{{ one_password_email_address }}" "{{ one_password_secret_key }}" --raw
+        echo "{{ one_password_master_password }}" | op signin "{{ one_password_subdomain }}.1password.com" "{{ one_password_email_address }}" "{{ one_password_secret_key }}" --raw
       register: op_session_token
-      changed_when: False
+      changed_when: false
 
     - name: delete item(-s)
       shell: |
-        export OP_SESSION_my="{{ op_session_token.stdout }}"
+        export "OP_SESSION_{{ one_password_subdomain }}"="{{ op_session_token.stdout }}"
         op delete item "{{ item.name }}" --vault "{{ one_password_vault_name }}"
       loop: "{{ servers }}"
-      ignore_errors: True
+      ignore_errors: true
 
     - name: sign out from a 1password account (1/2)
       shell: op signout --forget
-      changed_when: False
+      changed_when: false
 
     - name: sign out from a 1password account (2/2)
       ansible.builtin.file:
         path: $HOME/.config/op/config
         state: absent
-      changed_when: False
+      changed_when: false
   delegate_to: localhost
   become: no
-  run_once: True
+  run_once: true
 
 - name: delete a server
   hetzner.hcloud.hcloud_server:

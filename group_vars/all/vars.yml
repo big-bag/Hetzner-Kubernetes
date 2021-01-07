@@ -10,13 +10,16 @@ users:
     password: "{{ vault_password }}"
 #  - name: example_user
 #    comment: Example User
-#    password: hUnvYXeyeywnr8xKECVfjxF8
+#    password: "eBhPUgKd9J,&9}]D4Wq*~#wb"
+#  - name: sample_user
+#    comment: Sample User
+#    password: "Jus&=3ci.Kcm?HzxAJzAGjd8"
 
 ssh_port: "{{ vault_ssh_port }}"
 
 one_password_device_id: "{{ vault_one_password_device_id }}"
-one_password_password: "{{ vault_one_password_password }}"
-one_password_sign_in_address: "{{ vault_one_password_sign_in_address }}"
+one_password_master_password: "{{ vault_one_password_master_password }}"
+one_password_subdomain: "{{ vault_one_password_subdomain }}"
 one_password_email_address: "{{ vault_one_password_email_address }}"
 one_password_secret_key: "{{ vault_one_password_secret_key }}"
 one_password_vault_name: "{{ vault_one_password_vault_name }}"

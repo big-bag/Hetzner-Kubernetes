@@ -15,6 +15,7 @@
       Protocol 2
   loop: "{{ users }}"
   notify: restart sshd
+  no_log: true
 
 - name: insert an empty line before the marker line
   ansible.builtin.replace:

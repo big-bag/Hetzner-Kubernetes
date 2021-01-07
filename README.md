@@ -34,8 +34,10 @@ vault_password: [ password ]
 vault_ssh_port: [ port which different from standard '22' ]
 
 vault_one_password_device_id: [ device id which displayed in ansible error output when login first time to 1password from play host ]
-vault_one_password_password: '[ password from 1password account ]'
-vault_one_password_sign_in_address: [ url of 1password website ]
+# or generate new device id each time
+# vault_one_password_device_id: "{{ lookup('password', '/dev/null chars=ascii_lowercase,digits length=26') }}"
+vault_one_password_master_password: '[ password from 1password account ]'
+vault_one_password_subdomain: [ subdomain of 1password website ]
 vault_one_password_email_address: [ email from 1password account ]
 vault_one_password_secret_key: [ secret key from 1password account ]
 vault_one_password_vault_name: [ vault name which will be created and where it will be stored secrets of servers from project ]

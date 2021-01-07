@@ -45,3 +45,4 @@
     creates: $HOME/.google_authenticator
   become_user: "{{ item.name }}"
   loop: "{{ users }}"
+  no_log: true

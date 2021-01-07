@@ -9,9 +9,11 @@
     append: yes
   loop: "{{ users }}"
   changed_when: False
+  no_log: true
 
 - name: set authorized key
   ansible.posix.authorized_key:
     user: "{{ item.name }}"
     key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
   loop: "{{ users }}"
+  no_log: true
