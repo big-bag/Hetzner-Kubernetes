@@ -107,6 +107,7 @@
         op delete item "{{ item.name }}" --vault "{{ one_password_vault_name }}"
       loop: "{{ servers }}"
       ignore_errors: true
+      no_log: true
 
     - name: render config
       ansible.builtin.template:

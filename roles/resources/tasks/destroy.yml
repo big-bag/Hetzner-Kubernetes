@@ -14,6 +14,7 @@
         op delete item "{{ item.name }}" --vault "{{ one_password_vault_name }}"
       loop: "{{ servers }}"
       ignore_errors: true
+      no_log: true
 
     - name: sign out from a 1password account (1/2)
       shell: op signout --forget
