@@ -8,4 +8,6 @@
   become: yes
   gather_facts: no
   roles:
-    - security
+    - 2fa
+    - 1password
+    - sysctl

@@ -17,6 +17,7 @@ users:
 
 ssh_port: "{{ vault_ssh_port }}"
 
+one_password_cli_version: 1.8.0
 one_password_device_id: "{{ vault_one_password_device_id }}"
 one_password_master_password: "{{ vault_one_password_master_password }}"
 one_password_subdomain: "{{ vault_one_password_subdomain }}"
