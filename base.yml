@@ -9,3 +9,5 @@
   gather_facts: no
   roles:
     - selinux
+    - timezone
+    - ntp

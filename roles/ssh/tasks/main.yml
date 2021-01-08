@@ -22,7 +22,6 @@
     path: /etc/ssh/sshd_config
     regexp: '(?<=.\n)# BEGIN ANSIBLE MANAGED BLOCK$'
     replace: '\n# BEGIN ANSIBLE MANAGED BLOCK'
-  notify: restart sshd
 
 - name: configure a non-standard port
   ansible.builtin.replace:

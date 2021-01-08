@@ -1,0 +1,3 @@
+---
+- name: reboot the machine to make selinux state change will take effect
+  ansible.builtin.reboot:

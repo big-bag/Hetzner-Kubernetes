@@ -1,8 +1,8 @@
 ---
 - import_tasks: create.yml
 
-- name: refresh inventory to ensure new instances exist in inventory
-  meta: refresh_inventory
-
 - import_tasks: destroy.yml
   tags: [ never, destroy ]
+
+- name: refresh inventory to ensure new instances exist in inventory
+  meta: refresh_inventory
