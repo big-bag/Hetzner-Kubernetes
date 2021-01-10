@@ -6,13 +6,13 @@
     replace: '#\1'
     backup: yes
 
-- name: insert russian pool zone
+- name: insert finland pool zone
   ansible.builtin.blockinfile:
     path: /etc/chrony.conf
     insertafter: '^#pool 2\.centos\.pool\.ntp\.org iburst$'
     block: |
       {% for index in range(0, 3 +1) %}
-      server {{ index }}.ru.pool.ntp.org
+      server {{ index }}.fi.pool.ntp.org
       {% endfor %}
   notify: restart chronyd
 

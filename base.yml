@@ -11,3 +11,4 @@
     - selinux
     - timezone
     - ntp
+    - docker
