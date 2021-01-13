@@ -1,11 +1,17 @@
 ---
+- name: add repository to use extra packages for enterprise linux
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+
 - name: install requirements
   ansible.builtin.dnf:
-    name: "{{ item }}"
-  loop:
-    - epel-release
-    - google-authenticator
-    - qrencode
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - google-authenticator
+      - qrencode
 
 - name: configure ssh to use the google authenticator pam module
   ansible.builtin.blockinfile:

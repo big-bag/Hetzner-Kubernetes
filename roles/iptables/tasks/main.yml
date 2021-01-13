@@ -10,6 +10,7 @@
 - name: install services for iptables
   ansible.builtin.dnf:
     name: iptables-services
+    state: present
   register: install_package
 
 - name: allow custom ssh port in default rules to access server in current session

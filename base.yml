@@ -12,3 +12,5 @@
     - timezone
     - ntp
     - docker
+    - git
+    - fish

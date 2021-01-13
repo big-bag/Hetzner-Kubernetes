@@ -1,0 +1,52 @@
+---
+- name: set up the repository
+  ansible.builtin.command:
+    argv:
+      - dnf
+      - config-manager
+      - --add-repo
+      - https://download.opensuse.org/repositories/shells:fish:release:3/CentOS_8/shells:fish:release:3.repo
+    creates: /etc/yum.repos.d/shells:fish:release:3.repo
+
+- name: install fish
+  ansible.builtin.dnf:
+    name: fish
+    state: present
+
+- name: change default shell to fish
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    shell: /usr/bin/fish
+  loop: "{{ users }} + [{ 'name': 'root' }]"
+  no_log: true
+
+- name: set up path for root to use git
+  ansible.builtin.lineinfile:
+    path: /root/.config/fish/config.fish
+    line: set -gx PATH /usr/local/bin $PATH
+    create: yes
+
+- name: install oh-my-fish
+  shell: curl --insecure -L https://get.oh-my.fish | fish
+  args:
+    creates: $HOME/.config/fish/conf.d/omf.fish
+  become_user: "{{ item.name }}"
+  loop: "{{ users }} + [{ 'name': 'root' }]"
+  no_log: true
+
+- name: set up agnoster theme
+  shell: omf install agnoster
+  args:
+    executable: /usr/bin/fish
+    creates: $HOME/.local/share/omf/themes/agnoster/
+  become_user: "{{ item.name }}"
+  loop: "{{ users }} + [{ 'name': 'root' }]"
+  no_log: true
+
+- name: hide hostname
+  ansible.builtin.lineinfile:
+    path: /home/{{ item.name }}/.config/fish/config.fish
+    line: set -g theme_hide_hostname yes
+    create: yes
+  loop: "{{ users }}"
+  no_log: true

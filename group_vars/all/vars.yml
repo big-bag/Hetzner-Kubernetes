@@ -24,3 +24,5 @@ one_password_subdomain: "{{ vault_one_password_subdomain }}"
 one_password_email_address: "{{ vault_one_password_email_address }}"
 one_password_secret_key: "{{ vault_one_password_secret_key }}"
 one_password_vault_name: "{{ vault_one_password_vault_name }}"
+
+git_version: 2.30.0

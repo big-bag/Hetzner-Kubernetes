@@ -31,7 +31,7 @@
     src: https://cache.agilebits.com/dist/1P/op/pkg/v{{ one_password_cli_version }}/op_linux_amd64_v{{ one_password_cli_version }}.zip
     dest: /usr/local/bin
     remote_src: yes
-  when: "'{{ one_password_cli_version }}' > '{{ installed_version }}'"
+  when: "'{{ one_password_cli_version }}' != '{{ installed_version }}'"
   delegate_to: localhost
 
 - name: delete .sig file included in the download

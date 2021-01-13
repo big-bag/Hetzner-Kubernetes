@@ -4,7 +4,6 @@
     name: "{{ item.name }}"
     comment: "{{ item.comment }}"
     password: "{{ item.password | password_hash('sha512') }}"
-    shell: /bin/bash
     groups: wheel
     append: yes
   loop: "{{ users }}"

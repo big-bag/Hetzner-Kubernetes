@@ -2,6 +2,7 @@
 - name: install package which allows restricting a package to a fixed version number
   ansible.builtin.dnf:
     name: python3-dnf-plugin-versionlock
+    state: present
 
 - name: lock the docker version
   ansible.builtin.blockinfile:
@@ -21,12 +22,13 @@
 
 - name: install the docker engine and containerd
   ansible.builtin.dnf:
-    name: "{{ item }}"
+    name: "{{ packages }}"
     state: present
-  loop:
-    - docker-ce
-    - docker-ce-cli
-    - containerd.io
+  vars:
+    packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
 
 - name: start and enable service docker
   ansible.builtin.systemd:
