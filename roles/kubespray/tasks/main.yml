@@ -1,0 +1,49 @@
+---
+- name: clone a kubespray repo
+  ansible.builtin.git:
+    repo: https://github.com/kubernetes-sigs/kubespray.git
+    dest: "{{ playbook_dir }}/../kubespray"
+  run_once: true
+
+- name: install dependencies
+  ansible.builtin.pip:
+    requirements: "{{ playbook_dir }}/../kubespray/requirements.txt"
+    executable: pip3
+
+- name: build inventory (1/2)
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../kubespray/inventory/sample/"
+    dest: "{{ playbook_dir }}/../kubespray/inventory/mycluster"
+    remote_src: yes
+  run_once: true
+  changed_when: false
+
+- name: build inventory (2/2)
+  ansible.builtin.template:
+    src: inventory.ini.j2
+    dest: "{{ playbook_dir }}/../kubespray/inventory/mycluster/inventory.ini"
+  run_once: true
+  changed_when: false
+
+- name: create dynamic inventory for hetzner cloud
+  ansible.builtin.blockinfile:
+    path: "{{ playbook_dir }}/../kubespray/inventory/mycluster/hcloud.yml"
+    block: |
+      ---
+      plugin: hcloud
+      token: {{ vault_hcloud_token }}
+    create: yes
+
+- name: start the deployment
+  ansible.builtin.command:
+    argv:
+      - ansible-playbook
+      - -i
+      - "{{ playbook_dir }}/../kubespray/inventory/mycluster/hcloud.yml"
+      - -i
+      - "{{ playbook_dir }}/../kubespray/inventory/mycluster/inventory.ini"
+      - "{{ playbook_dir }}/../kubespray/cluster.yml"
+      - --become
+  environment:
+    ANSIBLE_LIBRARY: /usr/local/lib/python3.8/dist-packages/ansible/modules/
+    ANSIBLE_MODULE_UTILS: /usr/local/lib/python3.8/dist-packages/ansible/module_utils/

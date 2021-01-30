@@ -37,6 +37,12 @@
     state: absent
   loop: "{{ servers }}"
 
+- name: delete a basic network
+  hetzner.hcloud.hcloud_network:
+    api_token: "{{ hcloud_token }}"
+    name: network-1
+    state: absent
+
 - name: delete a basic ssh_key
   hetzner.hcloud.hcloud_ssh_key:
     api_token: "{{ hcloud_token }}"

@@ -27,7 +27,7 @@
     create: yes
 
 - name: install oh-my-fish
-  shell: curl --insecure -L https://get.oh-my.fish | fish
+  shell: PATH=$PATH:/usr/local/bin && curl --insecure -L https://get.oh-my.fish | fish
   args:
     creates: $HOME/.config/fish/conf.d/omf.fish
   become_user: "{{ item.name }}"
@@ -35,7 +35,7 @@
   no_log: true
 
 - name: set up agnoster theme
-  shell: omf install agnoster
+  shell: set PATH $PATH /usr/local/bin && omf install agnoster
   args:
     executable: /usr/bin/fish
     creates: $HOME/.local/share/omf/themes/agnoster/

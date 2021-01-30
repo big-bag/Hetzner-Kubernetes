@@ -30,6 +30,11 @@
 
 - name: build git
   block:
+    - name: install the software that unarchive module depends on
+      ansible.builtin.dnf:
+        name: tar
+        state: present
+
     - name: download git tarball
       ansible.builtin.unarchive:
         src: https://mirrors.edge.kernel.org/pub/software/scm/git/git-{{ git_version }}.tar.gz

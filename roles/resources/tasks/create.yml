@@ -5,6 +5,22 @@
     name: "{{ users | json_query('[*].name') | first }}"
     public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
+- name: create a basic network
+  hetzner.hcloud.hcloud_network:
+    api_token: "{{ hcloud_token }}"
+    name: network-1
+    ip_range: 10.0.0.0/16
+    state: present
+
+- name: create a basic subnetwork
+  hetzner.hcloud.hcloud_subnetwork:
+    api_token: "{{ hcloud_token }}"
+    network: network-1
+    ip_range: 10.0.0.0/24
+    network_zone: eu-central
+    type: cloud
+    state: present
+
 - name: create a server with ssh key
   hetzner.hcloud.hcloud_server:
     api_token: "{{ hcloud_token }}"
@@ -15,3 +31,12 @@
     ssh_keys: [ "{{ users | json_query('[*].name') | first }}" ]
   loop: "{{ servers }}"
   register: server
+
+- name: create a server network and specify the ip address
+  hetzner.hcloud.hcloud_server_network:
+    api_token: "{{ hcloud_token }}"
+    network: network-1
+    server: "{{ item.name }}"
+    ip: "{{ item.ip }}"
+    state: present
+  loop: "{{ servers }}"

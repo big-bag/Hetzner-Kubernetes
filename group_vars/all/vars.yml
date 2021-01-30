@@ -1,19 +1,48 @@
 ---
 servers:
   - name: centos-2gb-hel1-1
-#  - name: centos-2gb-hel1-2
-#  - name: centos-2gb-hel1-3
+    group:
+      - kube-master
+      - etcd
+    ip: 10.0.0.2
+    etcd_member_name: etcd1
+  - name: centos-2gb-hel1-2
+    group:
+      - kube-master
+      - etcd
+      - kube-node
+    ip: 10.0.0.3
+    etcd_member_name: etcd2
+  - name: centos-2gb-hel1-3
+    group:
+      - kube-master
+      - etcd
+      - kube-node
+    ip: 10.0.0.4
+    etcd_member_name: etcd3
+#  - name: centos-2gb-hel1-4
+#    group:
+#      - kube-node
+#    ip: 10.0.0.5
+#  - name: centos-2gb-hel1-5
+#    group:
+#      - kube-node
+#    ip: 10.0.0.6
+#  - name: centos-2gb-hel1-6
+#    group:
+#      - kube-node
+#    ip: 10.0.0.7
 
 users:
   - name: "{{ vault_name }}"
     comment: "{{ vault_comment }}"
     password: "{{ vault_password }}"
-#  - name: example_user
-#    comment: Example User
-#    password: "eBhPUgKd9J,&9}]D4Wq*~#wb"
-#  - name: sample_user
-#    comment: Sample User
-#    password: "Jus&=3ci.Kcm?HzxAJzAGjd8"
+  - name: example_user
+    comment: Example User
+    password: "eBhPUgKd9J,&9}]D4Wq*~#wb"
+  - name: sample_user
+    comment: Sample User
+    password: "Jus&=3ci.Kcm?HzxAJzAGjd8"
 
 ssh_port: "{{ vault_ssh_port }}"
 

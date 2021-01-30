@@ -8,9 +8,9 @@
   become: yes
   gather_facts: no
   roles:
-    - selinux
+#    - selinux
     - timezone
     - ntp
-    - docker
+#    - docker
     - git
     - fish

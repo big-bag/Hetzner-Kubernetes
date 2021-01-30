@@ -10,3 +10,6 @@
 
 - name: include a play to configure common basic settings
   import_playbook: base.yml
+
+- name: include a play to deploy kubernetes on hetzner cloud
+  import_playbook: kubernetes.yml
