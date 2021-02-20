@@ -1,0 +1,4 @@
+---
+- name: define tag to run kubespray play
+  ansible.builtin.set_fact:
+    tag: always

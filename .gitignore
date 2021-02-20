@@ -1,4 +1,4 @@
-# ------------------- Absible ------------------- #
-hcloud.yml
+group_vars
+inventory
 .vault_password
-group_vars/all/vault.yml
+host_vars/localhost/vault.yml

@@ -7,7 +7,7 @@
     groups: wheel
     append: yes
   loop: "{{ users }}"
-  changed_when: False
+  changed_when: false
   no_log: true
 
 - name: set authorized key

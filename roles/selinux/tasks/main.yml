@@ -1,5 +1,0 @@
----
-- name: disable selinux
-  ansible.posix.selinux:
-    state: disabled
-  notify: reboot the machine to make selinux state change will take effect

@@ -1,0 +1,9 @@
+---
+- name: post kubespray play
+  hosts: localhost
+  connection: local
+  become: no
+  gather_facts: no
+  roles:
+    - kubectl
+    - post-kubespray

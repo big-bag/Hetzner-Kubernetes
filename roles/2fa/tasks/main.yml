@@ -37,17 +37,17 @@
 
 - name: initialize one-time passcodes for user
   ansible.builtin.command:
-    argv:
-      - google-authenticator
-      - --time-based
-      - --qr-mode=none
-      - --force
-      - --disallow-reuse
-      - --minimal-window
-      - --rate-limit=3
-      - --rate-time=30
-      - --emergency-codes=10
-      - --quiet
+    cmd: >
+      google-authenticator
+        --time-based
+        --qr-mode=none
+        --force
+        --disallow-reuse
+        --minimal-window
+        --rate-limit=3
+        --rate-time=30
+        --emergency-codes=10
+        --quiet
     creates: $HOME/.google_authenticator
   become_user: "{{ item.name }}"
   loop: "{{ users }}"

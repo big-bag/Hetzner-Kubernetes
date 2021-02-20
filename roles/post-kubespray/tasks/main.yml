@@ -1,0 +1,39 @@
+---
+- name: determine uid of local user from which ansible is running
+  ansible.builtin.command:
+    cmd: id -u
+  register: uid
+  changed_when: false
+
+- name: determine gid of local user from which ansible is running
+  ansible.builtin.command:
+    cmd: id -g
+  register: gid
+  changed_when: false
+
+- name: change owner of downloaded artifacts
+  ansible.builtin.file:
+    path: inventory/artifacts
+    owner: "{{ uid.stdout }}"
+    group: "{{ gid.stdout }}"
+    recurse: yes
+  become: yes
+
+- name: change controller host name to use the controller's public ip
+  ansible.builtin.replace:
+    path: inventory/artifacts/admin.conf
+    regexp: 'https:\/\/.*:6443'
+    replace: "https://{{ hostvars[groups['kube-master'][0]]['ipv4'] }}:6443"
+
+- name: copy config
+  ansible.builtin.copy:
+    src: inventory/artifacts/admin.conf
+    dest: $HOME/.kube/config-mycluster.conf
+
+- name: setup path to kubernetes config persistently
+  ansible.builtin.blockinfile:
+    path: $HOME/.config/fish/conf.d/kubectl.fish
+    block: |
+      # Path to mycluster kubernetes config.
+      set -x KUBECONFIG "$HOME/.kube/config-mycluster.conf"
+    create: yes

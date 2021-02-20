@@ -18,4 +18,4 @@
     - ssh
   post_tasks:
     - name: bring host(-s) back to play after failure (e.g., if one host was unreachable)
-      meta: clear_host_errors
+      ansible.builtin.meta: clear_host_errors

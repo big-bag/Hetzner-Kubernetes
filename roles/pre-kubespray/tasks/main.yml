@@ -1,0 +1,88 @@
+---
+- name: install dependencies
+  ansible.builtin.pip:
+    requirements: "{{ playbook_dir }}/submodules/kubespray/requirements.txt"
+    executable: pip3
+
+- name: copy configs
+  ansible.builtin.copy:
+    src: submodules/kubespray/inventory/sample/group_vars
+    dest: inventory
+    remote_src: yes
+    force: no
+
+- name: build inventory
+  ansible.builtin.template:
+    src: hosts.yml.j2
+    dest: inventory/hosts.yml
+  notify: define tag to run kubespray play
+
+- name: configure iptables backend for calico cni
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/k8s-net-calico.yml
+    regexp: '^# calico_iptables_backend: "Legacy"$'
+    replace: 'calico_iptables_backend: "NFT"'
+  notify: define tag to run kubespray play
+
+- name: configure downloading kubectl onto localhost
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/k8s-cluster.yml
+    regexp: '^# kubectl_localhost: false$'
+    replace: 'kubectl_localhost: true'
+  notify: define tag to run kubespray play
+
+- name: configure copying of kubeconfig on localhost
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/k8s-cluster.yml
+    regexp: '^# kubeconfig_localhost: false$'
+    replace: 'kubeconfig_localhost: true'
+  notify: define tag to run kubespray play
+
+- name: create a directory for artifacts
+  ansible.builtin.file:
+    path: inventory/artifacts
+    state: directory
+    mode: '0750'
+
+- name: gather facts from hcloud servers
+  ansible.builtin.setup:
+  delegate_to: "{{ item }}"
+  delegate_facts: true
+  loop: "{{ groups['hcloud'] }}"
+
+- name: add host to group 'kube-master'
+  ansible.builtin.add_host:
+    name: "{{ item.name }}"
+    groups: kube-master
+  when: "'kube-master' in {{ item.group }}"
+  loop: "{{ servers }}"
+  changed_when: false
+
+- name: set list of the ip addresses of the controller nodes (1/2)
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/k8s-cluster.yml
+    regexp: 'supplementary_addresses_in_ssl_keys: \[.*\]'
+    replace: "supplementary_addresses_in_ssl_keys: [{{ groups['kube-master'] | map('extract', hostvars, ['ipv4']) | join(', ') }}]"
+  notify: define tag to run kubespray play
+
+- name: set list of the ip addresses of the controller nodes (2/2)
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/k8s-cluster.yml
+    regexp: '# (supplementary_addresses_in_ssl_keys: \[.*\])'
+    replace: '\1'
+  notify: define tag to run kubespray play
+
+- name: enable the metrics server
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/addons.yml
+    regexp: '^metrics_server_enabled: false$'
+    replace: 'metrics_server_enabled: true'
+  notify: define tag to run kubespray play
+
+- name: refresh inventory to ensure new instances exist in inventory
+  ansible.builtin.meta: refresh_inventory
+
+- name: define variables to connect to server(-s)
+  ansible.builtin.set_fact:
+    port: "{{ ssh_port }}"
+    user: "{{ users | json_query('[*].name') | first }}"

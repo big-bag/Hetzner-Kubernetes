@@ -1,15 +1,34 @@
 ---
 - name: include a play to create a basic ssh key and a server with ssh key
-  import_playbook: resources.yml
+  ansible.builtin.import_playbook: resources.yml
 
 - name: include a play to create users and configure ssh; performed after the previous play, depends on it
-  import_playbook: connection.yml
+  ansible.builtin.import_playbook: connection.yml
 
 - name: include a play to configure server security; performed after the previous two plays, doesn't depend on them
-  import_playbook: security.yml
+  ansible.builtin.import_playbook: security.yml
 
 - name: include a play to configure common basic settings
-  import_playbook: base.yml
+  ansible.builtin.import_playbook: base.yml
 
-- name: include a play to deploy kubernetes on hetzner cloud
-  import_playbook: kubernetes.yml
+- name: include a play to prepare before deploy kubernetes
+  ansible.builtin.import_playbook: pre-kubespray.yml
+
+- name: include a play to clear all existing facts of targetted hosts before deploy cluster
+  ansible.builtin.import_playbook: clear-facts.yml
+
+- name: include kubespray tasks to deploy kubernetes; performed after the previous play, depends on it
+  ansible.builtin.import_playbook: submodules/kubespray/cluster.yml
+  vars:
+    ansible_port: "{{ hostvars['localhost']['port'] }}"
+    ansible_user: "{{ hostvars['localhost']['user'] }}"
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa
+    ansible_become: yes
+  environment:
+    ANSIBLE_LIBRARY: /usr/local/lib/python3.8/dist-packages/ansible/modules/
+    ANSIBLE_MODULE_UTILS: /usr/local/lib/python3.8/dist-packages/ansible/module_utils/
+  tags:
+    - "{{ hostvars['localhost']['tag'] | default('never') }}"
+
+- name: include a play to prepare use kubectl
+  ansible.builtin.import_playbook: post-kubespray.yml

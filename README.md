@@ -15,14 +15,7 @@ pip3 install hcloud
 ```
 
 # Content of secret files
-`hcloud.yml`
-```
----
-plugin: hcloud
-token: [ token with read/write permissions generated in hetzner project: security -> api tokens ]
-```
-
-`group_vars/all/vault.yml`
+`host_vars/localhost/vault.yml`
 ```
 ---
 vault_hcloud_token: [ token with read/write permissions generated in hetzner project: security -> api tokens ]
@@ -33,7 +26,7 @@ vault_password: [ password ]
 
 vault_ssh_port: [ port which different from standard '22' ]
 
-vault_one_password_device_id: [ device id which displayed in ansible error output when login first time to 1password from play host ]
+vault_one_password_device_id: [ device id which displayed in ansible error output when login first time to 1password from play host or in ~/.op/config ]
 # or generate new device id each time
 # vault_one_password_device_id: "{{ lookup('password', '/dev/null chars=ascii_lowercase,digits length=26') }}"
 vault_one_password_master_password: '[ password from 1password account ]'

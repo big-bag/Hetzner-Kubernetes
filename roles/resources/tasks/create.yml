@@ -40,3 +40,29 @@
     ip: "{{ item.ip }}"
     state: present
   loop: "{{ servers }}"
+
+- name: create directories for inventory and group variables
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - inventory
+    - group_vars/hcloud
+
+- name: create dynamic inventory for hetzner cloud
+  ansible.builtin.blockinfile:
+    path: inventory/hcloud.yml
+    block: |
+      ---
+      plugin: hcloud
+      token: {{ vault_hcloud_token }}
+    create: yes
+
+- name: create a symbolic links from host vars to group vars
+  ansible.builtin.file:
+    src: "{{ playbook_dir }}/host_vars/localhost/{{ item }}.yml"
+    dest: "{{ playbook_dir }}/group_vars/hcloud/{{ item }}.yml"
+    state: link
+  loop:
+    - vars
+    - vault

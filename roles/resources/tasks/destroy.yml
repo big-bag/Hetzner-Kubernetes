@@ -2,33 +2,41 @@
 - name: delete item(-s) in 1password
   block:
     - name: sign in to a 1password account
-      shell: |
-        export OP_DEVICE="{{ one_password_device_id }}"
-        echo "{{ one_password_master_password }}" | op signin "{{ one_password_subdomain }}.1password.com" "{{ one_password_email_address }}" "{{ one_password_secret_key }}" --raw
+      ansible.builtin.shell:
+        cmd: |
+          export OP_DEVICE="{{ one_password_device_id }}"
+          echo "{{ one_password_master_password }}" | op signin "{{ one_password_subdomain }}.1password.com" "{{ one_password_email_address }}" "{{ one_password_secret_key }}" --raw
       register: op_session_token
       changed_when: false
 
     - name: delete item(-s)
-      shell: |
-        export "OP_SESSION_{{ one_password_subdomain }}"="{{ op_session_token.stdout }}"
-        op delete item "{{ item.name }}" --vault "{{ one_password_vault_name }}"
+      ansible.builtin.shell:
+        cmd: |
+          export "OP_SESSION_{{ one_password_subdomain }}"="{{ op_session_token.stdout }}"
+          op delete item "{{ item.name }}" --vault "{{ one_password_vault_name }}"
       loop: "{{ servers }}"
       ignore_errors: true
       no_log: true
       changed_when: false
 
     - name: sign out from a 1password account (1/2)
-      shell: op signout --forget
+      ansible.builtin.shell:
+        cmd: op signout --forget
       changed_when: false
 
     - name: sign out from a 1password account (2/2)
       ansible.builtin.file:
         path: $HOME/.config/op/config
         state: absent
-      changed_when: false
-  delegate_to: localhost
-  become: no
   run_once: true
+
+- name: delete directories for group variables and inventory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - group_vars
+    - inventory
 
 - name: delete a server
   hetzner.hcloud.hcloud_server:

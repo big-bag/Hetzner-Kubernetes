@@ -2,8 +2,9 @@
 - name: resources play
   hosts: localhost
   connection: local
-  gather_facts: no
   vars:
     hcloud_token: "{{ vault_hcloud_token }}"
+  become: no
+  gather_facts: no
   roles:
     - resources

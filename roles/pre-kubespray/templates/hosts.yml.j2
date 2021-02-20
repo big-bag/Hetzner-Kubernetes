@@ -1,0 +1,41 @@
+# ## Configure 'ip' variable to bind kubernetes services on a
+# ## different ip than the default iface
+# ## We should set etcd_member_name for etcd cluster. The node that is not a etcd member do not need to set the value, or can set the empty string value.
+
+all:
+  hosts:
+{% for srv in servers %}
+    {{ srv.name }}:
+      ip: {{ srv.ip }}
+{% if 'etcd' in srv.group %}
+      etcd_member_name: {{ srv.etcd_member_name }}
+{% endif %}
+{% endfor %}
+  children:
+    kube-master:
+      hosts:
+{% for srv in servers %}
+{% if 'kube-master' in srv.group %}
+        {{ srv.name }}:
+{% endif %}
+{% endfor %}
+    kube-node:
+      hosts:
+{% for srv in servers %}
+{% if 'kube-node' in srv.group %}
+        {{ srv.name }}:
+{% endif %}
+{% endfor %}
+    etcd:
+      hosts:
+{% for srv in servers %}
+{% if 'etcd' in srv.group %}
+        {{ srv.name }}:
+{% endif %}
+{% endfor %}
+    k8s-cluster:
+      children:
+        kube-master:
+        kube-node:
+    calico-rr:
+      hosts: {}
