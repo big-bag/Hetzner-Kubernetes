@@ -11,7 +11,7 @@
   ansible.builtin.dnf:
     name: iptables-services
     state: present
-  register: install_package
+  register: install_iptables_services
 
 - name: allow custom ssh port in default rules to access server in current session
   ansible.builtin.replace:
@@ -19,7 +19,7 @@
     regexp: '(.*\s+)22(\s+.*)?$'
     replace: '\1"{{ ssh_port }}"\2'
     backup: yes
-  when: install_package.changed
+  when: install_iptables_services.changed
 
 # the iptables service starts before copying the rules, because the rules for ssh only allow new connections (--ctstate NEW,ESTABLISHED)
 # if the iptables service will start with these rules, the connection to the server(-s) will be interrupted and the playbook will not be played to the end
@@ -38,11 +38,48 @@
     dest: /opt/fw.stop
     mode: '0755'
 
+- name: add host to group 'kube-master'
+  ansible.builtin.add_host:
+    name: "{{ item.name }}"
+    groups: kube-master
+  when: "'kube-master' in {{ item.group }}"
+  loop: "{{ servers }}"
+  run_once: true
+  changed_when: false
+
+- name: add host to group 'etcd'
+  ansible.builtin.add_host:
+    name: "{{ item.name }}"
+    groups: etcd
+  when: "'etcd' in {{ item.group }}"
+  loop: "{{ servers }}"
+  run_once: true
+  changed_when: false
+
+- name: add host to group 'kube-node'
+  ansible.builtin.add_host:
+    name: "{{ item.name }}"
+    groups: kube-node
+  when: "'kube-node' in {{ item.group }}"
+  loop: "{{ servers }}"
+  run_once: true
+  changed_when: false
+
+- name: get stats of k8s-cluster variable file
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/inventory/group_vars/k8s-cluster/k8s-cluster.yml"
+  register: k8s_cluster_variables
+  delegate_to: localhost
+
+- name: load k8s-cluster variable file
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/inventory/group_vars/k8s-cluster/k8s-cluster.yml"
+  when: k8s_cluster_variables.stat.exists
+
 - name: create firewall rules
   ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "/etc/sysconfig/{{ item }}"
-  notify: "restart {{ item }}"
-  loop:
-    - iptables
-    - ip6tables
+    src: "{{ item.0 }}.j2"
+    dest: "/etc/sysconfig/{{ item.0 }}"
+  notify: "restart {{ item.0 }}"
+  when: "'{{ item.1.name }}' in inventory_hostname"
+  loop: "{{ ['iptables', 'ip6tables']|product(servers)|list }}"

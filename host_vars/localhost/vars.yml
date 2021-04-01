@@ -10,14 +10,12 @@ servers:
     group:
       - kube-master
       - etcd
-      - kube-node
     ip: 10.0.0.3
     etcd_member_name: etcd2
   - name: centos-2gb-hel1-3
     group:
       - kube-master
       - etcd
-      - kube-node
     ip: 10.0.0.4
     etcd_member_name: etcd3
   - name: centos-2gb-hel1-4
@@ -28,10 +26,6 @@ servers:
     group:
       - kube-node
     ip: 10.0.0.6
-  - name: centos-2gb-hel1-6
-    group:
-      - kube-node
-    ip: 10.0.0.7
 
 users:
   - name: "{{ vault_name }}"
@@ -54,4 +48,4 @@ one_password_email_address: "{{ vault_one_password_email_address }}"
 one_password_secret_key: "{{ vault_one_password_secret_key }}"
 one_password_vault_name: "{{ vault_one_password_vault_name }}"
 
-git_version: 2.30.0
+git_version: 2.31.1

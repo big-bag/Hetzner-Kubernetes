@@ -1,7 +1,17 @@
 *filter
-
 :INPUT DROP [0:0]
 :FORWARD DROP [0:0]
 :OUTPUT DROP [0:0]
 
+{% if k8s_cluster_variables.stat.exists %}
+{% if 'kube-master' in group_names %}
+# ------------------- Kubernetes master rules ------------------- #
+
+# Only accept looback traffic originating from localhost
+-A OUTPUT -o lo              -j ACCEPT -m comment --comment "Only accept looback traffic originating from localhost"
+-A INPUT  -i lo              -j ACCEPT -m comment --comment "Only accept looback traffic originating from localhost"
+-A INPUT  ! -i lo -s ::1/128 -j REJECT -m comment --comment "Only accept looback traffic originating from localhost"
+
+{% endif %}
+{% endif %}
 COMMIT

@@ -79,6 +79,13 @@
     replace: 'metrics_server_enabled: true'
   notify: define tag to run kubespray play
 
+- name: configure calico mtu
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/k8s-net-calico.yml
+    regexp: '^# calico_mtu: 1500$'
+    replace: 'calico_mtu: 1430'
+  notify: define tag to run kubespray play
+
 - name: refresh inventory to ensure new instances exist in inventory
   ansible.builtin.meta: refresh_inventory
 

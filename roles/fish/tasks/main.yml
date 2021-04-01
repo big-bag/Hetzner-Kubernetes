@@ -24,12 +24,20 @@
     line: set -gx PATH /usr/local/bin $PATH
     create: yes
 
+- name: clone oh-my-fish repo
+  ansible.builtin.git:
+    repo: https://github.com/oh-my-fish/oh-my-fish.git
+    dest: /usr/local/src/oh-my-fish
+  environment:
+    PATH: /usr/local/bin
+
 - name: install oh-my-fish
   ansible.builtin.shell:
     cmd: |
       PATH=$PATH:/usr/local/bin
-      curl --insecure -L https://get.oh-my.fish | fish
+      bin/install --offline --noninteractive
   args:
+    chdir: /usr/local/src/oh-my-fish
     creates: $HOME/.config/fish/conf.d/omf.fish
   become_user: "{{ item.name }}"
   loop: "{{ users }} + [{ 'name': 'root' }]"

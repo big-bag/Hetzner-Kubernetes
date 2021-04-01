@@ -15,7 +15,7 @@
   ansible.builtin.import_playbook: pre-kubespray.yml
 
 - name: include a play to clear all existing facts of targetted hosts before deploy cluster
-  ansible.builtin.import_playbook: clear-facts.yml
+  ansible.builtin.import_playbook: iptables-and-facts.yml
 
 - name: include kubespray tasks to deploy kubernetes; performed after the previous play, depends on it
   ansible.builtin.import_playbook: submodules/kubespray/cluster.yml
