@@ -15,9 +15,9 @@
           export "OP_SESSION_{{ one_password_subdomain }}"="{{ op_session_token.stdout }}"
           op delete item "{{ item.name }}" --vault "{{ one_password_vault_name }}"
       loop: "{{ servers }}"
-      ignore_errors: true
-      no_log: true
+      failed_when: false
       changed_when: false
+      no_log: true
 
     - name: sign out from a 1password account (1/2)
       ansible.builtin.shell:

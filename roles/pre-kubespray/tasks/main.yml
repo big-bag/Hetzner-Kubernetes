@@ -1,4 +1,55 @@
 ---
+- name: synchronize and initialize kubespray submodule
+  ansible.builtin.shell:
+    cmd: |
+      git submodule sync
+      git submodule update --init
+  args:
+    chdir: "{{ playbook_dir }}"
+  changed_when: false
+
+- name: add original kubespray repo as upstream
+  ansible.builtin.command:
+    cmd: git remote add upstream https://github.com/kubernetes-sigs/kubespray.git
+  args:
+    chdir: "{{ playbook_dir }}/submodules/kubespray/"
+  failed_when: false
+  changed_when: false
+
+- name: sync master and active branches with upstream
+  ansible.builtin.shell:
+    cmd: |
+      git checkout origin/{{ item }}
+      git fetch upstream
+      git merge upstream/{{ item }}
+
+      expect << EOF
+        spawn git push origin origin/{{ item }}
+
+        expect "Username for 'https://github.com':"
+        send "{{ github_username }}\n"
+
+        expect "Password for 'https://{{ github_username }}@github.com':"
+        send "{{ github_password }}\n"
+
+        expect eof
+      EOF
+  args:
+    chdir: "{{ playbook_dir }}/submodules/kubespray/"
+  loop:
+    - master
+    - release-2.15
+    - release-2.14
+    - release-2.13
+  changed_when: false
+
+- name: switch to appropriate branch
+  ansible.builtin.command:
+    cmd: git submodule update --remote
+  args:
+    chdir: "{{ playbook_dir }}"
+  changed_when: false
+
 - name: install dependencies
   ansible.builtin.pip:
     requirements: "{{ playbook_dir }}/submodules/kubespray/requirements.txt"

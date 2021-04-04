@@ -3,7 +3,7 @@
   ansible.builtin.shell:
     cmd: kubectl version --client | awk -F "GitVersion:\"" '{print$2}' | awk -F "\"" '{print$1}'
   register: current_version
-  ignore_errors: true
+  failed_when: false
   changed_when: false
 
 - name: if the tool isn't installed, then set the version to zero; otherwise, set the current version

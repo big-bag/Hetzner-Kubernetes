@@ -3,7 +3,7 @@
   ansible.builtin.command:
     cmd: /usr/local/bin/git --version
   register: current_version
-  ignore_errors: true
+  failed_when: false
   changed_when: false
 
 - name: if git isn't installed, then set the version to zero; otherwise, set the current version

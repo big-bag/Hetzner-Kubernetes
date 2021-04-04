@@ -4,7 +4,7 @@
     cmd: op --version
   register: current_version
   delegate_to: localhost
-  ignore_errors: true
+  failed_when: false
   changed_when: false
 
 - name: if the tool isn't installed, then set the version to zero; otherwise, set the current version

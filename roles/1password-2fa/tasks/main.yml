@@ -28,7 +28,7 @@
       op get vault "{{ one_password_vault_name }}"
   register: vault_created
   delegate_to: localhost
-  ignore_errors: true
+  failed_when: false
   changed_when: false
   become: no
   run_once: true
@@ -59,7 +59,7 @@
   loop: "{{ servers|product(users)|list }}"
   register: item_or_section_created
   delegate_to: localhost
-  ignore_errors: true
+  failed_when: false
   become: no
   no_log: true
   run_once: true
@@ -83,7 +83,7 @@
           export "OP_SESSION_{{ one_password_subdomain }}"="{{ op_session_token.stdout }}"
           op delete item "{{ item.name }}" --vault "{{ one_password_vault_name }}"
       loop: "{{ servers }}"
-      ignore_errors: true
+      failed_when: false
       no_log: true
 
     - name: render config

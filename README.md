@@ -34,4 +34,7 @@ vault_one_password_subdomain: [ subdomain of 1password website ]
 vault_one_password_email_address: [ email from 1password account ]
 vault_one_password_secret_key: [ secret key from 1password account ]
 vault_one_password_vault_name: [ vault name which will be created and where it will be stored secrets of servers from project ]
+
+vault_github_username: [ github account username ]
+vault_github_password: [ github account password or personal access token: https://github.com/settings/tokens ]
 ```
