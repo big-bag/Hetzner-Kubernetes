@@ -8,7 +8,7 @@
 
 - name: if git isn't installed, then set the version to zero; otherwise, set the current version
   ansible.builtin.set_fact:
-    current_version: "{% if current_version.failed %}0{% else %}{{ current_version.stdout[12:] }}{% endif %}"
+    current_version: "{% if current_version.rc == 2 %}0{% else %}{{ current_version.stdout[12:] }}{% endif %}"
 
 - name: build git
   block:

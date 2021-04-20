@@ -9,7 +9,7 @@
 
 - name: if the tool isn't installed, then set the version to zero; otherwise, set the current version
   ansible.builtin.set_fact:
-    current_version: "{% if current_version.failed %}0{% else %}{{ current_version.stdout }}{% endif %}"
+    current_version: "{% if current_version.rc == 2 %}0{% else %}{{ current_version.stdout }}{% endif %}"
 
 - name: download the tool
   ansible.builtin.unarchive:

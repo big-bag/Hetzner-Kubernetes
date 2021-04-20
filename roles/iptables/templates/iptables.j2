@@ -75,6 +75,7 @@
 -A OUTPUT -p tcp -s {{ item.1.ip }}               -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow server to initiate requests"
 -A INPUT  -p tcp -d {{ item.1.ip }} --dport 179   -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow incoming BGP requests from kube-masters and kube-nodes to calico-node"
 -A INPUT  -p tcp -d {{ item.1.ip }} --dport 6443  -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow incoming requests to kube-apiserver"
+-A INPUT  -p tcp -d {{ item.1.ip }} --dport 6789  -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow incoming requests to cephfs provisioner monitor"
 -A INPUT  -p tcp -d {{ item.1.ip }} --dport 10250 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow incoming requests from kube-nodes to kubelet"
 -A INPUT  -p tcp -d {{ item.1.ip }} --dport 10257 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow incoming requests to kube-controller-manager"
 -A INPUT  -p tcp -d {{ item.1.ip }} --dport 10259 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow incoming requests to kube-scheduler"
@@ -90,6 +91,10 @@
 -A OUTPUT -p tcp -s {{ kube_service_addresses }}             -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow requests from calico-node and kube-apiserver"
 -A INPUT  -p tcp -d {{ kube_service_addresses }} --dport 443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow requests from calico-node and kube-apiserver"
 -A INPUT  -p tcp -d {{ kube_service_addresses }}             -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow requests from calico-node and kube-apiserver"
+
+-A OUTPUT -p tcp -s {{ kube_pods_subnet }} -d {{ kube_pods_subnet }} --dport 8000 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow health check from kubernetes-dashboard to kubernetes-metrics-scraper"
+-A INPUT  -p tcp -s {{ kube_pods_subnet }} -d {{ kube_pods_subnet }} --dport 8000 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow health check from kubernetes-dashboard to kubernetes-metrics-scraper"
+-A INPUT  -p tcp -s {{ kube_pods_subnet }} --sport 8000 -d {{ kube_pods_subnet }} -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow health check from kubernetes-dashboard to kubernetes-metrics-scraper"
 
 -A OUTPUT -p udp -s {{ nodelocaldns_ip }} -d {{ nodelocaldns_ip }} --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow requests from node-cache to nodelocaldns"
 -A INPUT  -p udp -s {{ nodelocaldns_ip }} -d {{ nodelocaldns_ip }} --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow requests from node-cache to nodelocaldns"
@@ -148,9 +153,13 @@
 -A INPUT  -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 8181 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow readinessProbe for coredns"
 -A INPUT  -p tcp -s {{ kube_pods_subnet }} --sport 8181 -d {{ ansible_facts['default_ipv4']['address'] }} -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow readinessProbe for coredns"
 
--A OUTPUT -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 8443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe and readinessProbe for metrics-server from kubelet"
--A INPUT  -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 8443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe and readinessProbe for metrics-server from kubelet"
--A INPUT  -p tcp -s {{ kube_pods_subnet }} --sport 8443 -d {{ ansible_facts['default_ipv4']['address'] }} -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow livenessProbe and readinessProbe for metrics-server from kubelet"
+-A OUTPUT -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 8443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe for kubernetes-dashboard; allow livenessProbe and readinessProbe for metrics-server"
+-A INPUT  -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 8443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe for kubernetes-dashboard; allow livenessProbe and readinessProbe for metrics-server"
+-A INPUT  -p tcp -s {{ kube_pods_subnet }} --sport 8443 -d {{ ansible_facts['default_ipv4']['address'] }} -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow livenessProbe for kubernetes-dashboard; allow livenessProbe and readinessProbe for metrics-server"
+
+-A OUTPUT -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 8000 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe for kubernetes-metrics-scraper"
+-A INPUT  -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 8000 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe for kubernetes-metrics-scraper"
+-A INPUT  -p tcp -s {{ kube_pods_subnet }} --sport 8000 -d {{ ansible_facts['default_ipv4']['address'] }} -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow livenessProbe for kubernetes-metrics-scraper"
 
 -A OUTPUT -p tcp -s {{ nodelocaldns_ip }} -d {{ nodelocaldns_ip }} --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow requests from node-cache to nodelocaldns"
 -A INPUT  -p tcp -s {{ nodelocaldns_ip }} -d {{ nodelocaldns_ip }} --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow requests from node-cache to nodelocaldns"

@@ -5,7 +5,7 @@
 - name: include a play to create users and configure ssh; performed after the previous play, depends on it
   ansible.builtin.import_playbook: connection.yml
 
-- name: include a play to configure server security; performed after the previous two plays, doesn't depend on them
+- name: include a play to configure server security
   ansible.builtin.import_playbook: security.yml
 
 - name: include a play to configure common basic settings
@@ -17,16 +17,13 @@
 - name: include a play to clear all existing facts of targetted hosts before deploy cluster
   ansible.builtin.import_playbook: iptables-and-facts.yml
 
-- name: include kubespray tasks to deploy kubernetes; performed after the previous play, depends on it
+- name: include kubespray tasks to deploy kubernetes; performed after the previous play, depends on pre-kubespray play
   ansible.builtin.import_playbook: submodules/kubespray/cluster.yml
   vars:
     ansible_port: "{{ hostvars['localhost']['port'] }}"
     ansible_user: "{{ hostvars['localhost']['user'] }}"
     ansible_ssh_private_key_file: ~/.ssh/id_rsa
     ansible_become: yes
-  environment:
-    ANSIBLE_LIBRARY: /usr/local/lib/python3.8/dist-packages/ansible/modules/
-    ANSIBLE_MODULE_UTILS: /usr/local/lib/python3.8/dist-packages/ansible/module_utils/
   tags:
     - "{{ hostvars['localhost']['tag'] | default('never') }}"
 

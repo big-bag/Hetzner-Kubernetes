@@ -19,12 +19,11 @@
 - name: sync master and active branches with upstream
   ansible.builtin.shell:
     cmd: |
-      git checkout origin/{{ item }}
+      git checkout master
       git fetch upstream
-      git merge upstream/{{ item }}
 
       expect << EOF
-        spawn git push origin origin/{{ item }}
+        spawn git push origin refs/remotes/upstream/{{ item }}:refs/heads/{{ item }}
 
         expect "Username for 'https://github.com':"
         send "{{ github_username }}\n"
@@ -52,7 +51,13 @@
 
 - name: install dependencies
   ansible.builtin.pip:
-    requirements: "{{ playbook_dir }}/submodules/kubespray/requirements.txt"
+    name:
+      - cryptography
+      - jinja2
+      - netaddr
+      - pbr
+      - jmespath
+      - ruamel.yaml
     executable: pip3
 
 - name: copy configs
@@ -66,13 +71,6 @@
   ansible.builtin.template:
     src: hosts.yml.j2
     dest: inventory/hosts.yml
-  notify: define tag to run kubespray play
-
-- name: configure iptables backend for calico cni
-  ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/k8s-net-calico.yml
-    regexp: '^# calico_iptables_backend: "Legacy"$'
-    replace: 'calico_iptables_backend: "NFT"'
   notify: define tag to run kubespray play
 
 - name: configure downloading kubectl onto localhost
@@ -123,11 +121,11 @@
     replace: '\1'
   notify: define tag to run kubespray play
 
-- name: enable the metrics server
+- name: configure iptables backend for calico cni
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/addons.yml
-    regexp: '^metrics_server_enabled: false$'
-    replace: 'metrics_server_enabled: true'
+    path: inventory/group_vars/k8s-cluster/k8s-net-calico.yml
+    regexp: '^# calico_iptables_backend: "Legacy"$'
+    replace: 'calico_iptables_backend: "NFT"'
   notify: define tag to run kubespray play
 
 - name: configure calico mtu
@@ -135,6 +133,61 @@
     path: inventory/group_vars/k8s-cluster/k8s-net-calico.yml
     regexp: '^# calico_mtu: 1500$'
     replace: 'calico_mtu: 1430'
+  notify: define tag to run kubespray play
+
+- name: enable kubernetes dashboard
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/addons.yml
+    regexp: '# (dashboard_enabled: true)'
+    replace: '\1'
+  notify: define tag to run kubespray play
+
+- name: configure namespace for kubernetes dashboard
+  ansible.builtin.lineinfile:
+    path: inventory/group_vars/k8s-cluster/addons.yml
+    insertafter: '^dashboard_enabled: true$'
+    line: 'dashboard_namespace: kubernetes-dashboard'
+
+- name: enable the metrics server
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/addons.yml
+    regexp: '^metrics_server_enabled: false$'
+    replace: 'metrics_server_enabled: true'
+  notify: define tag to run kubespray play
+
+- name: setting cephfs provisioner monitors list (1/2)
+  ansible.builtin.set_fact:
+    cephfs_monitors: |
+      {% set comma = joiner(':6789,') %}
+      {% for srv in servers %}
+      {% if 'kube-master' in srv.group %}
+      {{ comma() }}{{ srv.ip }}
+      {% endif %}
+      {% endfor %}
+
+- name: setting cephfs provisioner monitors list (2/2)
+  ansible.builtin.set_fact:
+    cephfs_monitors: "{{ cephfs_monitors | replace(\"\n\",\"\") + ':6789' }}"
+
+- name: configure cephfs provisioner (1/3)
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/addons.yml
+    regexp: '^cephfs_provisioner_enabled: false$'
+    replace: 'cephfs_provisioner_enabled: true'
+  notify: define tag to run kubespray play
+
+- name: configure cephfs provisioner (2/3)
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/addons.yml
+    regexp: 'cephfs_provisioner_monitors: ".*"'
+    replace: "cephfs_provisioner_monitors: \"{{ cephfs_monitors }}\""
+  notify: define tag to run kubespray play
+
+- name: configure cephfs provisioner (3/3)
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s-cluster/addons.yml
+    regexp: '# (cephfs_provisioner_monitors: ".*")'
+    replace: '\1'
   notify: define tag to run kubespray play
 
 - name: refresh inventory to ensure new instances exist in inventory
