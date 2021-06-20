@@ -1,4 +1,8 @@
-group_vars/
+collections/*
+!collections/.gitkeep
 inventory/
+group_vars/
+venv/
+
 .vault_password
 host_vars/localhost/vault.yml

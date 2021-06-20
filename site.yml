@@ -1,14 +1,11 @@
 ---
-- name: include a play to create a basic ssh key and a server with ssh key
+- name: include a play to create a ssh key, a servers and a load balancer
   ansible.builtin.import_playbook: resources.yml
 
 - name: include a play to create users and configure ssh; performed after the previous play, depends on it
   ansible.builtin.import_playbook: connection.yml
 
-- name: include a play to configure server security
-  ansible.builtin.import_playbook: security.yml
-
-- name: include a play to configure common basic settings
+- name: include a play to configure server security and common basic settings
   ansible.builtin.import_playbook: base.yml
 
 - name: include a play to prepare before deploy kubernetes

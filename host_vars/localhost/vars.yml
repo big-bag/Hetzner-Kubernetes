@@ -4,28 +4,28 @@ servers:
     group:
       - kube-master
       - etcd
-    ip: 10.0.0.2
+    ip: 10.0.0.3
     etcd_member_name: etcd1
   - name: kube-hel1-htz-2
     group:
       - kube-master
       - etcd
-    ip: 10.0.0.3
+    ip: 10.0.0.4
     etcd_member_name: etcd2
   - name: kube-hel1-htz-3
     group:
       - kube-master
       - etcd
-    ip: 10.0.0.4
+    ip: 10.0.0.5
     etcd_member_name: etcd3
   - name: kube-hel1-htz-4
     group:
       - kube-node
-    ip: 10.0.0.5
+    ip: 10.0.0.6
   - name: kube-hel1-htz-5
     group:
       - kube-node
-    ip: 10.0.0.6
+    ip: 10.0.0.7
 
 users:
   - name:     "{{ vault_name }}"

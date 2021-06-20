@@ -1,5 +1,5 @@
 ---
-- name: clear facts play
+- name: configure iptables and clear facts play
   hosts: hcloud
   remote_user: "{{ users | json_query('[*].name') | first }}"
   vars:

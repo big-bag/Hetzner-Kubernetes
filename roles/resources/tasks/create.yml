@@ -1,25 +1,24 @@
 ---
-- name: create a basic ssh key
+# ------------------- server ------------------- #
+- name: create a ssh key
   hetzner.hcloud.hcloud_ssh_key:
     api_token: "{{ hcloud_token }}"
     name: "{{ users | json_query('[*].name') | first }}"
     public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
-- name: create a basic network
+- name: create a network
   hetzner.hcloud.hcloud_network:
     api_token: "{{ hcloud_token }}"
     name: network-1
     ip_range: 10.0.0.0/16
-    state: present
 
-- name: create a basic subnetwork
+- name: create a subnetwork
   hetzner.hcloud.hcloud_subnetwork:
     api_token: "{{ hcloud_token }}"
     network: network-1
     ip_range: 10.0.0.0/24
     network_zone: eu-central
     type: cloud
-    state: present
 
 - name: create a server with ssh key
   hetzner.hcloud.hcloud_server:
@@ -38,10 +37,59 @@
     network: network-1
     server: "{{ item.name }}"
     ip: "{{ item.ip }}"
-    state: present
   loop: "{{ servers }}"
 
-- name: create directories for inventory and group variables
+# ------------------- load balancer ------------------- #
+- name: create a load balancer
+  hetzner.hcloud.hcloud_load_balancer:
+    api_token: "{{ hcloud_token }}"
+    name: load-balancer-1
+    location: hel1
+    load_balancer_type: lb11
+
+- name: create a load balancer network and specify the ip address
+  hetzner.hcloud.hcloud_load_balancer_network:
+    api_token: "{{ hcloud_token }}"
+    load_balancer: load-balancer-1
+    network: network-1
+    ip: 10.0.0.2
+
+- name: add host to group 'kube-node'
+  ansible.builtin.add_host:
+    name: "{{ item.name }}"
+    groups: kube-node
+  when: "'kube-node' in {{ item.group }}"
+  loop: "{{ servers }}"
+  changed_when: false
+
+- name: create a server load balancer target
+  hetzner.hcloud.hcloud_load_balancer_target:
+    api_token: "{{ hcloud_token }}"
+    load_balancer: load-balancer-1
+    type: server
+    server: "{{ item }}"
+    use_private_ip: yes
+  loop: "{{ groups['kube-node'] }}"
+
+- name: create a load balancer service (1/2)
+  hetzner.hcloud.hcloud_load_balancer_service:
+    api_token: "{{ hcloud_token }}"
+    load_balancer: load-balancer-1
+    protocol: http
+    listen_port: 80
+
+- name: create a load balancer service (2/2)
+  hetzner.hcloud.hcloud_load_balancer_service:
+    api_token: "{{ hcloud_token }}"
+    load_balancer: load-balancer-1
+    listen_port: 80
+    health_check:
+      http:
+        path: "/healthz"
+  changed_when: false
+
+# ------------------- folders and files ------------------- #
+- name: create folders for inventory and group variables
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -49,7 +97,7 @@
     - inventory
     - group_vars/hcloud
 
-- name: create dynamic inventory for hetzner cloud
+- name: create a hetzner cloud dynamic inventory file
   ansible.builtin.blockinfile:
     path: inventory/hcloud.yml
     block: |

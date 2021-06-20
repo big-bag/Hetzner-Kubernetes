@@ -6,12 +6,10 @@
 
 - name: install requirements
   ansible.builtin.dnf:
-    name: "{{ packages }}"
-    state: present
-  vars:
-    packages:
+    name:
       - google-authenticator
       - qrencode
+    state: present
 
 - name: configure ssh to use the google authenticator pam module
   ansible.builtin.blockinfile:

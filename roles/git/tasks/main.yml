@@ -14,10 +14,7 @@
   block:
     - name: install the software that git depends on
       ansible.builtin.dnf:
-        name: "{{ packages }}"
-        state: present
-      vars:
-        packages:
+        name:
           - gettext-devel
           - openssl-devel
           - perl-CPAN
@@ -27,6 +24,7 @@
           - autoconf
           - libcurl-devel
           - expat-devel
+        state: present
 
     - name: install the software that unarchive module depends on
       ansible.builtin.dnf:

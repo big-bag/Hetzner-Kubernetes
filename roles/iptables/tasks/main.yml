@@ -67,13 +67,13 @@
 
 - name: get stats of k8s-cluster variable file
   ansible.builtin.stat:
-    path: "{{ playbook_dir }}/inventory/group_vars/k8s-cluster/k8s-cluster.yml"
+    path: "{{ playbook_dir }}/inventory/group_vars/k8s_cluster/k8s-cluster.yml"
   register: k8s_cluster_variables
   delegate_to: localhost
 
 - name: load k8s-cluster variable file
   ansible.builtin.include_vars:
-    file: "{{ playbook_dir }}/inventory/group_vars/k8s-cluster/k8s-cluster.yml"
+    file: "{{ playbook_dir }}/inventory/group_vars/k8s_cluster/k8s-cluster.yml"
   when: k8s_cluster_variables.stat.exists
 
 - name: create firewall rules

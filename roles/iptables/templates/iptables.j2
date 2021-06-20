@@ -96,6 +96,10 @@
 -A INPUT  -p tcp -s {{ kube_pods_subnet }} -d {{ kube_pods_subnet }} --dport 8000 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow health check from kubernetes-dashboard to kubernetes-metrics-scraper"
 -A INPUT  -p tcp -s {{ kube_pods_subnet }} --sport 8000 -d {{ kube_pods_subnet }} -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow health check from kubernetes-dashboard to kubernetes-metrics-scraper"
 
+-A OUTPUT -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 9808 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe for hcloud-csi"
+-A INPUT  -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 9808 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe for hcloud-csi"
+-A INPUT  -p tcp -s {{ kube_pods_subnet }} --sport 9808 -d {{ ansible_facts['default_ipv4']['address'] }} -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow livenessProbe for hcloud-csi"
+
 -A OUTPUT -p udp -s {{ nodelocaldns_ip }} -d {{ nodelocaldns_ip }} --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow requests from node-cache to nodelocaldns"
 -A INPUT  -p udp -s {{ nodelocaldns_ip }} -d {{ nodelocaldns_ip }} --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow requests from node-cache to nodelocaldns"
 -A INPUT  -p udp -s {{ nodelocaldns_ip }} --sport 53 -d {{ nodelocaldns_ip }} -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow requests from node-cache to nodelocaldns"
@@ -160,6 +164,14 @@
 -A OUTPUT -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 8000 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe for kubernetes-metrics-scraper"
 -A INPUT  -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 8000 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe for kubernetes-metrics-scraper"
 -A INPUT  -p tcp -s {{ kube_pods_subnet }} --sport 8000 -d {{ ansible_facts['default_ipv4']['address'] }} -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow livenessProbe for kubernetes-metrics-scraper"
+
+-A OUTPUT -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 9808 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe for hcloud-csi"
+-A INPUT  -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 9808 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe for hcloud-csi"
+-A INPUT  -p tcp -s {{ kube_pods_subnet }} --sport 9808 -d {{ ansible_facts['default_ipv4']['address'] }} -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow livenessProbe for hcloud-csi"
+
+-A OUTPUT -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 10254 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe and readinessProbe for ingress-nginx-controller"
+-A INPUT  -p tcp -s {{ ansible_facts['default_ipv4']['address'] }} -d {{ kube_pods_subnet }} --dport 10254 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow livenessProbe and readinessProbe for ingress-nginx-controller"
+-A INPUT  -p tcp -s {{ kube_pods_subnet }} --sport 10254 -d {{ ansible_facts['default_ipv4']['address'] }} -m conntrack --ctstate ESTABLISHED     -j ACCEPT -m comment --comment "Allow livenessProbe and readinessProbe for ingress-nginx-controller"
 
 -A OUTPUT -p tcp -s {{ nodelocaldns_ip }} -d {{ nodelocaldns_ip }} --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow requests from node-cache to nodelocaldns"
 -A INPUT  -p tcp -s {{ nodelocaldns_ip }} -d {{ nodelocaldns_ip }} --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT -m comment --comment "Allow requests from node-cache to nodelocaldns"

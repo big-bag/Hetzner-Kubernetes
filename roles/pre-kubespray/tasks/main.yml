@@ -1,4 +1,5 @@
 ---
+# ------------------- kubespray repo, venv and configs ------------------- #
 - name: synchronize and initialize kubespray submodule
   ansible.builtin.shell:
     cmd: |
@@ -37,9 +38,8 @@
     chdir: "{{ playbook_dir }}/submodules/kubespray/"
   loop:
     - master
+    - release-2.16
     - release-2.15
-    - release-2.14
-    - release-2.13
   changed_when: false
 
 - name: switch to appropriate branch
@@ -49,16 +49,11 @@
     chdir: "{{ playbook_dir }}"
   changed_when: false
 
-- name: install dependencies
+- name: create virtual environment and install dependencies into it
   ansible.builtin.pip:
-    name:
-      - cryptography
-      - jinja2
-      - netaddr
-      - pbr
-      - jmespath
-      - ruamel.yaml
-    executable: pip3
+    requirements: "{{ playbook_dir }}/submodules/kubespray/requirements.txt"
+    virtualenv: "{{ playbook_dir }}/venv"
+    virtualenv_python: python3
 
 - name: copy configs
   ansible.builtin.copy:
@@ -67,6 +62,7 @@
     remote_src: yes
     force: no
 
+# ------------------- inventory and group vars ------------------- #
 - name: build inventory
   ansible.builtin.template:
     src: hosts.yml.j2
@@ -75,14 +71,14 @@
 
 - name: configure downloading kubectl onto localhost
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/k8s-cluster.yml
+    path: inventory/group_vars/k8s_cluster/k8s-cluster.yml
     regexp: '^# kubectl_localhost: false$'
     replace: 'kubectl_localhost: true'
   notify: define tag to run kubespray play
 
 - name: configure copying of kubeconfig on localhost
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/k8s-cluster.yml
+    path: inventory/group_vars/k8s_cluster/k8s-cluster.yml
     regexp: '^# kubeconfig_localhost: false$'
     replace: 'kubeconfig_localhost: true'
   notify: define tag to run kubespray play
@@ -93,6 +89,7 @@
     state: directory
     mode: '0750'
 
+# ------------------- kubernetes ssl keys ------------------- #
 - name: gather facts from hcloud servers
   ansible.builtin.setup:
   delegate_to: "{{ item }}"
@@ -109,52 +106,63 @@
 
 - name: set list of the ip addresses of the controller nodes (1/2)
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/k8s-cluster.yml
+    path: inventory/group_vars/k8s_cluster/k8s-cluster.yml
     regexp: 'supplementary_addresses_in_ssl_keys: \[.*\]'
     replace: "supplementary_addresses_in_ssl_keys: [{{ groups['kube-master'] | map('extract', hostvars, ['ipv4']) | join(', ') }}]"
   notify: define tag to run kubespray play
 
 - name: set list of the ip addresses of the controller nodes (2/2)
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/k8s-cluster.yml
+    path: inventory/group_vars/k8s_cluster/k8s-cluster.yml
     regexp: '# (supplementary_addresses_in_ssl_keys: \[.*\])'
     replace: '\1'
   notify: define tag to run kubespray play
 
+# ------------------- calico ------------------- #
 - name: configure iptables backend for calico cni
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/k8s-net-calico.yml
+    path: inventory/group_vars/k8s_cluster/k8s-net-calico.yml
     regexp: '^# calico_iptables_backend: "Legacy"$'
     replace: 'calico_iptables_backend: "NFT"'
   notify: define tag to run kubespray play
 
 - name: configure calico mtu
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/k8s-net-calico.yml
+    path: inventory/group_vars/k8s_cluster/k8s-net-calico.yml
     regexp: '^# calico_mtu: 1500$'
     replace: 'calico_mtu: 1430'
   notify: define tag to run kubespray play
 
-- name: enable kubernetes dashboard
+# ------------------- kubernetes dashboard ------------------- #
+- name: enable kubernetes dashboard (1/2)
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/addons.yml
+    path: inventory/group_vars/k8s_cluster/addons.yml
+    regexp: 'dashboard_enabled: false$'
+    replace: 'dashboard_enabled: true'
+  notify: define tag to run kubespray play
+
+- name: enable kubernetes dashboard (2/2)
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s_cluster/addons.yml
     regexp: '# (dashboard_enabled: true)'
     replace: '\1'
   notify: define tag to run kubespray play
 
 - name: configure namespace for kubernetes dashboard
   ansible.builtin.lineinfile:
-    path: inventory/group_vars/k8s-cluster/addons.yml
+    path: inventory/group_vars/k8s_cluster/addons.yml
     insertafter: '^dashboard_enabled: true$'
-    line: 'dashboard_namespace: kubernetes-dashboard'
+    line: 'dashboard_namespace: kube-dashboard'
 
+# ------------------- metrics ------------------- #
 - name: enable the metrics server
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/addons.yml
+    path: inventory/group_vars/k8s_cluster/addons.yml
     regexp: '^metrics_server_enabled: false$'
     replace: 'metrics_server_enabled: true'
   notify: define tag to run kubespray play
 
+# ------------------- cephfs ------------------- #
 - name: setting cephfs provisioner monitors list (1/2)
   ansible.builtin.set_fact:
     cephfs_monitors: |
@@ -171,25 +179,48 @@
 
 - name: configure cephfs provisioner (1/3)
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/addons.yml
+    path: inventory/group_vars/k8s_cluster/addons.yml
     regexp: '^cephfs_provisioner_enabled: false$'
     replace: 'cephfs_provisioner_enabled: true'
   notify: define tag to run kubespray play
 
 - name: configure cephfs provisioner (2/3)
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/addons.yml
+    path: inventory/group_vars/k8s_cluster/addons.yml
     regexp: 'cephfs_provisioner_monitors: ".*"'
-    replace: "cephfs_provisioner_monitors: \"{{ cephfs_monitors }}\""
+    replace: 'cephfs_provisioner_monitors: "{{ cephfs_monitors }}"'
   notify: define tag to run kubespray play
 
 - name: configure cephfs provisioner (3/3)
   ansible.builtin.replace:
-    path: inventory/group_vars/k8s-cluster/addons.yml
+    path: inventory/group_vars/k8s_cluster/addons.yml
     regexp: '# (cephfs_provisioner_monitors: ".*")'
     replace: '\1'
   notify: define tag to run kubespray play
 
+# ------------------- nginx ingress ------------------- #
+- name: configure initializing master with necessary flag (1/2)
+  ansible.builtin.replace:
+    path: inventory/group_vars/all/all.yml
+    regexp: '(\s)cloud_provider:$'
+    replace: '\1cloud_provider: external'
+  notify: define tag to run kubespray play
+
+- name: configure initializing master with necessary flag (2/2)
+  ansible.builtin.replace:
+    path: inventory/group_vars/all/all.yml
+    regexp: '# (cloud_provider: external)'
+    replace: '\1'
+  notify: define tag to run kubespray play
+
+- name: enable nginx ingress controller
+  ansible.builtin.replace:
+    path: inventory/group_vars/k8s_cluster/addons.yml
+    regexp: '^ingress_nginx_enabled: false$'
+    replace: 'ingress_nginx_enabled: true'
+  notify: define tag to run kubespray play
+
+# ------------------- inventory and vars ------------------- #
 - name: refresh inventory to ensure new instances exist in inventory
   ansible.builtin.meta: refresh_inventory
 

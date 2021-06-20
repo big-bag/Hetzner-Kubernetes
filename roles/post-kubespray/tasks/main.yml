@@ -1,4 +1,5 @@
 ---
+# ------------------- artifacts ------------------- #
 - name: determine uid of local user from which ansible is running
   ansible.builtin.command:
     cmd: id -u
@@ -29,6 +30,7 @@
   ansible.builtin.copy:
     src: inventory/artifacts/admin.conf
     dest: $HOME/.kube/config-mycluster.conf
+    mode: '0400'
 
 - name: setup path to kubernetes config persistently
   ansible.builtin.blockinfile:
@@ -37,3 +39,74 @@
       # Path to mycluster kubernetes config.
       set -x KUBECONFIG "$HOME/.kube/config-mycluster.conf"
     create: yes
+
+# ------------------- kubernetes version ------------------- #
+- name: check installed version (1/2)
+  ansible.builtin.shell:
+    cmd: kubectl version | grep "Server Version" | awk -F "Major:\"" '{print$2}' | awk -F "\"" '{print$1}'
+  register: major_version
+  changed_when: false
+
+- name: check installed version (2/2)
+  ansible.builtin.shell:
+    cmd: kubectl version | grep "Server Version" | awk -F "Minor:\"" '{print$2}' | awk -F "\"" '{print$1}'
+  register: minor_version
+  changed_when: false
+
+# ------------------- csi-driver ------------------- #
+- name: create a secret containing the token, fail on validation errors
+  community.kubernetes.k8s:
+    definition: "{{ lookup('template', 'csi-driver-secret.yml.j2') | from_yaml }}"
+    validate:
+      fail_on_error: yes
+
+- name: define deployment file
+  ansible.builtin.set_fact:
+    deployment_file: https://raw.githubusercontent.com/hetznercloud/csi-driver/master/deploy/kubernetes/hcloud-csi.yml
+  when: "'{{ major_version.stdout }}.{{ minor_version.stdout }}' == '1.21' or
+         '{{ major_version.stdout }}.{{ minor_version.stdout }}' == '1.20'"
+
+- name: define deployment file
+  ansible.builtin.set_fact:
+    deployment_file: https://raw.githubusercontent.com/hetznercloud/csi-driver/v1.5.1/deploy/kubernetes/hcloud-csi.yml
+  when: "'{{ major_version.stdout }}.{{ minor_version.stdout }}' == '1.19'"
+
+- name: deploy the csi driver
+  community.kubernetes.k8s:
+    definition: "{{ item }}"
+    validate:
+      fail_on_error: yes
+  loop: "{{ lookup('url', '{{ deployment_file }}', split_lines=False) | from_yaml_all | list }}"
+  when: item is not none
+
+# ------------------- integration tools ------------------- #
+- name: create a secret containing hetzner cloud api token
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: hcloud
+        namespace: kube-system
+      data:
+        token: "{{ vault_hcloud_token }}"
+      type: Opaque
+
+- name: define deployment file
+  ansible.builtin.set_fact:
+    deployment_file: https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml
+  when: "'{{ major_version.stdout }}.{{ minor_version.stdout }}' == '1.21' or
+         '{{ major_version.stdout }}.{{ minor_version.stdout }}' == '1.20'"
+
+- name: define deployment file
+  ansible.builtin.set_fact:
+    deployment_file: https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/v1.8.1/deploy/ccm.yaml
+  when: "'{{ major_version.stdout }}.{{ minor_version.stdout }}' == '1.19'"
+
+- name: integrate kubernetes cluster with the hetzner cloud api
+  community.kubernetes.k8s:
+    definition: "{{ item }}"
+    validate:
+      fail_on_error: yes
+  loop: "{{ lookup('url', '{{ deployment_file }}', split_lines=False) | from_yaml_all | list }}"
+  when: item is not none

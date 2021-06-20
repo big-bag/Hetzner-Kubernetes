@@ -1,20 +1,39 @@
-# Requirements
-Install collections with CLI
+# Setting up environment
+
+Create a virtual environment
 ```
-ansible-galaxy collection install -r requirements.yml
+python3 -m virtualenv venv
 ```
 
-Install requirements for [dynamic inventory](https://docs.ansible.com/ansible/latest/collections/hetzner/hcloud/hcloud_inventory.html "Ansible dynamic inventory plugin for the Hetzner Cloud")
+Activate the virtual environment
 ```
-sudo apt install -y python3-pip
-pip3 --version
-```
-```
-pip3 install --upgrade pip
-pip3 install hcloud
+source venv/bin/activate.fish
 ```
 
-# Content of secret files
+Install Ansible
+```
+python3 -m pip install ansible==2.9.18
+```
+
+Install collections
+```
+ansible-galaxy collection install -r requirements.yml -p ./collections
+```
+
+Install requirements and library for [Hetzner Cloud dynamic inventory](https://docs.ansible.com/ansible/latest/collections/hetzner/hcloud/hcloud_inventory.html "Ansible dynamic inventory plugin for the Hetzner Cloud")
+```
+pip3 install jmespath \
+             hcloud \
+             openshift \
+             kubernetes-validate
+```
+
+Deactivate the virtual environment
+```
+deactivate
+```
+
+# Populate content of secret file
 `host_vars/localhost/vault.yml`
 ```
 ---
@@ -37,4 +56,26 @@ vault_one_password_vault_name: [ vault name which will be created and where it w
 
 vault_github_username: [ github account username ]
 vault_github_password: [ github account password or personal access token: https://github.com/settings/tokens ]
+```
+
+# Launching installation
+
+Activate the virtual environment
+```
+source venv/bin/activate.fish
+```
+
+Run playbook to install kubernetes cluster
+```
+ansible-playbook site.yml
+```
+
+Run playbook to delete all resources
+```
+ansible-playbook site.yml --tags "destroy"
+```
+
+Deactivate the virtual environment
+```
+deactivate
 ```

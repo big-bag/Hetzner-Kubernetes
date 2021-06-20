@@ -1,5 +1,5 @@
 ---
-- name: base play
+- name: security and basic configuration play
   hosts: hcloud
   remote_user: "{{ users | json_query('[*].name') | first }}"
   vars:
@@ -8,6 +8,12 @@
   become: yes
   gather_facts: no
   roles:
+    - iptables
+    - 2fa
+    - 1password-cli
+    - 1password-2fa
+    - sysctl
+    - upgrade
     - timezone
     - ntp
     - git
