@@ -1,5 +1,5 @@
 ---
-- name: include a play to create a ssh key, a servers and a load balancer
+- name: include a play to create a ssh key, servers and a load balancer
   ansible.builtin.import_playbook: resources.yml
 
 - name: include a play to create users and configure ssh; performed after the previous play, depends on it

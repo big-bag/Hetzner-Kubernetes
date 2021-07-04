@@ -56,7 +56,7 @@
 # ------------------- csi-driver ------------------- #
 - name: create a secret containing the token, fail on validation errors
   community.kubernetes.k8s:
-    definition: "{{ lookup('template', 'csi-driver-secret.yml.j2') | from_yaml }}"
+    definition: "{{ lookup('template', 'csi-driver/secret.yml') | from_yaml }}"
     validate:
       fail_on_error: yes
 
@@ -82,15 +82,9 @@
 # ------------------- integration tools ------------------- #
 - name: create a secret containing hetzner cloud api token
   community.kubernetes.k8s:
-    definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: hcloud
-        namespace: kube-system
-      data:
-        token: "{{ vault_hcloud_token }}"
-      type: Opaque
+    definition: "{{ lookup('template', 'integration-tools/secret.yml') | from_yaml }}"
+    validate:
+      fail_on_error: yes
 
 - name: define deployment file
   ansible.builtin.set_fact:
@@ -109,4 +103,24 @@
     validate:
       fail_on_error: yes
   loop: "{{ lookup('url', '{{ deployment_file }}', split_lines=False) | from_yaml_all | list }}"
+  when: item is not none
+
+# ------------------- cert manager ------------------- #
+- name: create a secret containing cloudflare api token
+  community.kubernetes.k8s:
+    definition: "{{ lookup('template', 'cert-manager/secret.yml') | from_yaml }}"
+    validate:
+      fail_on_error: yes
+
+- name: create an acme issuer
+  community.kubernetes.k8s:
+    src: "{{ role_path }}/templates/cert-manager/issuer.yml"
+
+# ------------------- kubernetes dashboard ------------------- #
+- name: create an ingress resource to access kubernetes dashboard
+  community.kubernetes.k8s:
+    definition: "{{ item }}"
+    validate:
+      fail_on_error: yes
+  loop: "{{ lookup('template', 'ingress-nginx/kubernetes-dashboard.yml', split_lines=False) | from_yaml_all | list }}"
   when: item is not none

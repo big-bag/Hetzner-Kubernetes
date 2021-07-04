@@ -1,4 +1,5 @@
 ---
+# ------------------- volume ------------------- #
 - name: gather hcloud volume infos
   hetzner.hcloud.hcloud_volume_info:
     api_token: "{{ hcloud_token }}"
@@ -11,12 +12,7 @@
     state: absent
   loop: "{{ output.hcloud_volume_info }}"
 
-- name: delete a load balancer
-  hetzner.hcloud.hcloud_load_balancer:
-    api_token: "{{ hcloud_token }}"
-    name: load-balancer-1
-    state: absent
-
+# ------------------- 1password ------------------- #
 - name: delete item(-s) in 1password
   block:
     - name: sign in to a 1password account
@@ -48,6 +44,7 @@
         state: absent
   run_once: true
 
+# ------------------- folders ------------------- #
 - name: delete folders
   ansible.builtin.file:
     path: "{{ item }}"
@@ -56,6 +53,7 @@
     - group_vars
     - inventory
 
+# ------------------- server ------------------- #
 - name: delete a server
   hetzner.hcloud.hcloud_server:
     api_token: "{{ hcloud_token }}"
@@ -74,3 +72,31 @@
     api_token: "{{ hcloud_token }}"
     name: "{{ users | json_query('[*].name') | first }}"
     state: absent
+
+# ------------------- cloudflare ------------------- #
+- name: gather hcloud load balancer infos
+  hetzner.hcloud.hcloud_load_balancer_info:
+    api_token: "{{ hcloud_token }}"
+  register: output
+
+- name: gather hcloud load balancer ipv4 address
+  ansible.builtin.set_fact:
+    load_balancer_ipv4: "{{ output['hcloud_load_balancer_info'][0]['ipv4_address'] }}"
+  when: output.hcloud_load_balancer_info | length > 0
+
+- name: delete a record on cloudflare which points to hcloud load balancer
+  community.general.cloudflare_dns:
+    api_token: "{{ vault_cloudflare_api_token }}"
+    zone: "{{ vault_domain }}"
+    type: A
+    value: "{{ load_balancer_ipv4 }}"
+    state: absent
+  when: load_balancer_ipv4 is defined
+
+# ------------------- load balancer ------------------- #
+- name: delete a load balancer
+  hetzner.hcloud.hcloud_load_balancer:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ item.name }}"
+    state: absent
+  loop: "{{ load_balancers }}"

@@ -35,27 +35,32 @@ deactivate
 
 # Populate content of secret file
 `host_vars/localhost/vault.yml`
+
+Example
 ```
 ---
-vault_hcloud_token: [ token with read/write permissions generated in hetzner project: security -> api tokens ]
+vault_hcloud_token: u796XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXnTUK # HCloud Project -> Security -> API TOKENS; Permissions: Read/Write
 
-vault_name: [ username ]
-vault_comment: [ full name ]
-vault_password: [ password ]
+vault_domain: example.com
 
-vault_ssh_port: [ port which different from standard '22' ]
+vault_name:     some.user
+vault_comment:  Some User
+vault_password: P@s$ w0rD
 
-vault_one_password_device_id: [ device id which displayed in ansible error output when login first time to 1password from play host or in ~/.op/config ]
-# or generate new device id each time
-# vault_one_password_device_id: "{{ lookup('password', '/dev/null chars=ascii_lowercase,digits length=26') }}"
-vault_one_password_master_password: '[ password from 1password account ]'
-vault_one_password_subdomain: [ subdomain of 1password website ]
-vault_one_password_email_address: [ email from 1password account ]
-vault_one_password_secret_key: [ secret key from 1password account ]
-vault_one_password_vault_name: [ vault name which will be created and where it will be stored secrets of servers from project ]
+vault_ssh_port: 9022                                                                 # Port that is different from the standard TCP/22
 
-vault_github_username: [ github account username ]
-vault_github_password: [ github account password or personal access token: https://github.com/settings/tokens ]
+vault_one_password_device_id:       kjbpXXXXXXXXXXXXXXXXXXarjp                       # Can be found in ~/.op/config
+vault_one_password_master_password: 'S0me P@ssword'
+vault_one_password_subdomain:       example
+vault_one_password_email_address:   some.user@example.com
+vault_one_password_secret_key:      K9-XXXXXX-XXXXXX-XXXXX-XXXXX-XXXXX-U1J7R
+vault_one_password_vault_name:      SomeVault                                        # Vault that will be created (if doesn't exist) and in which the secrets will be stored
+
+vault_github_username: some-user
+vault_github_password: 715bXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX52qd                      # Personal access token: https://github.com/settings/tokens
+
+vault_cloudflare_api_token: 1syxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX4Kka                 # https://dash.cloudflare.com/profile/api-tokens -> API Tokens; Permissions: Zone:Read, DNS:Edit
+vault_letsencrypt_email:    some.user@example.com                                    # Email which Let's Encrypt will use to contact about expiring certificates
 ```
 
 # Launching installation

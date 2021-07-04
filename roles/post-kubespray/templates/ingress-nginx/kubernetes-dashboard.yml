@@ -1,0 +1,39 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-dashboard
+  namespace: ingress-nginx
+spec:
+  type: ExternalName
+  externalName: kubernetes-dashboard.kube-dashboard.svc.cluster.local
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubernetes-dashboard
+  namespace: ingress-nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx # < use the shared ingress-nginx
+    cert-manager.io/cluster-issuer: letsencrypt-staging # < add an annotation indicating the issuer to use.
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2 # < rewrites the URL before forwarding the request to the backend pods; replaces the captured data in the URL from 'path' before forwarding the request to the kubernetes-dashboard service
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      rewrite ^(/dashboard)$ $1/ redirect; # < rewrites the URL to add a trailing slash ("/") only if URL/dashboard is accessed
+spec:
+  rules:
+    - host: {{ vault_domain }}
+      http:
+        paths:
+          - path: /dashboard(/|$)(.*) # < (.*) stores the dynamic URL that's generated while accessing the Kubernetes Dashboard
+            pathType: Prefix
+            backend:
+              service:
+                name: kubernetes-dashboard
+                port:
+                  number: 443
+  tls: # < placing a host in the TLS config will determine what ends up in the cert's subjectAltNames
+    - hosts:
+        - {{ vault_domain }}
+      secretName: {{ vault_domain | replace('.','-') }}-cert # < cert-manager will store the created certificate in this secret.

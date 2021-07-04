@@ -1,4 +1,83 @@
 ---
+# ------------------- load balancer ------------------- #
+- name: create a load balancer
+  hetzner.hcloud.hcloud_load_balancer:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ item.name }}"
+    location: hel1
+    load_balancer_type: lb11
+  loop: "{{ load_balancers }}"
+
+- name: create a load balancer network and specify the ip address
+  hetzner.hcloud.hcloud_load_balancer_network:
+    api_token: "{{ hcloud_token }}"
+    load_balancer: "{{ item.name }}"
+    network: network-1
+    ip: "{{ item.ip }}"
+  loop: "{{ load_balancers }}"
+
+- name: add host to group 'kube-node'
+  ansible.builtin.add_host:
+    name: "{{ item.name }}"
+    groups: kube-node
+  when: "'kube-node' in {{ item.group }}"
+  loop: "{{ servers }}"
+  changed_when: false
+
+- name: create a server load balancer target
+  hetzner.hcloud.hcloud_load_balancer_target:
+    api_token: "{{ hcloud_token }}"
+    load_balancer: "{{ item.0.name }}"
+    type: server
+    server: "{{ item.1 }}"
+    use_private_ip: yes
+  loop: "{{ load_balancers|product(groups['kube-node'])|list }}"
+
+- name: create a load balancer http service (1/2)
+  hetzner.hcloud.hcloud_load_balancer_service:
+    api_token: "{{ hcloud_token }}"
+    load_balancer: "{{ item.name }}"
+    protocol: http
+    listen_port: 80
+  loop: "{{ load_balancers }}"
+
+- name: create a load balancer http service (2/2)
+  hetzner.hcloud.hcloud_load_balancer_service:
+    api_token: "{{ hcloud_token }}"
+    load_balancer: "{{ item.name }}"
+    listen_port: 80
+    health_check:
+      http:
+        path: "/healthz"
+  loop: "{{ load_balancers }}"
+  changed_when: false
+
+- name: create a load balancer https service
+  hetzner.hcloud.hcloud_load_balancer_service:
+    api_token: "{{ hcloud_token }}"
+    load_balancer: "{{ item.name }}"
+    protocol: tcp
+    listen_port: 443
+    destination_port: 443
+  loop: "{{ load_balancers }}"
+
+# ------------------- cloudflare ------------------- #
+- name: gather hcloud load balancer infos
+  hetzner.hcloud.hcloud_load_balancer_info:
+    api_token: "{{ hcloud_token }}"
+  register: output
+
+- name: gather hcloud load balancer ipv4 address
+  ansible.builtin.set_fact:
+    load_balancer_ipv4: "{{ output['hcloud_load_balancer_info'][0]['ipv4_address'] }}"
+
+- name: create a record on cloudflare to point to hcloud load balancer
+  community.general.cloudflare_dns:
+    api_token: "{{ vault_cloudflare_api_token }}"
+    zone: "{{ vault_domain }}"
+    type: A
+    value: "{{ load_balancer_ipv4 }}"
+
 # ------------------- server ------------------- #
 - name: create a ssh key
   hetzner.hcloud.hcloud_ssh_key:
@@ -38,55 +117,6 @@
     server: "{{ item.name }}"
     ip: "{{ item.ip }}"
   loop: "{{ servers }}"
-
-# ------------------- load balancer ------------------- #
-- name: create a load balancer
-  hetzner.hcloud.hcloud_load_balancer:
-    api_token: "{{ hcloud_token }}"
-    name: load-balancer-1
-    location: hel1
-    load_balancer_type: lb11
-
-- name: create a load balancer network and specify the ip address
-  hetzner.hcloud.hcloud_load_balancer_network:
-    api_token: "{{ hcloud_token }}"
-    load_balancer: load-balancer-1
-    network: network-1
-    ip: 10.0.0.2
-
-- name: add host to group 'kube-node'
-  ansible.builtin.add_host:
-    name: "{{ item.name }}"
-    groups: kube-node
-  when: "'kube-node' in {{ item.group }}"
-  loop: "{{ servers }}"
-  changed_when: false
-
-- name: create a server load balancer target
-  hetzner.hcloud.hcloud_load_balancer_target:
-    api_token: "{{ hcloud_token }}"
-    load_balancer: load-balancer-1
-    type: server
-    server: "{{ item }}"
-    use_private_ip: yes
-  loop: "{{ groups['kube-node'] }}"
-
-- name: create a load balancer service (1/2)
-  hetzner.hcloud.hcloud_load_balancer_service:
-    api_token: "{{ hcloud_token }}"
-    load_balancer: load-balancer-1
-    protocol: http
-    listen_port: 80
-
-- name: create a load balancer service (2/2)
-  hetzner.hcloud.hcloud_load_balancer_service:
-    api_token: "{{ hcloud_token }}"
-    load_balancer: load-balancer-1
-    listen_port: 80
-    health_check:
-      http:
-        path: "/healthz"
-  changed_when: false
 
 # ------------------- folders and files ------------------- #
 - name: create folders for inventory and group variables

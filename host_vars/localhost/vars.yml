@@ -1,4 +1,8 @@
 ---
+load_balancers:
+  - name: load-balancer-1
+    ip: 10.0.0.2
+
 servers:
   - name: kube-hel1-htz-1
     group:
