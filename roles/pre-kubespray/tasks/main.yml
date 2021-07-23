@@ -152,7 +152,7 @@
   ansible.builtin.lineinfile:
     path: inventory/group_vars/k8s_cluster/addons.yml
     insertafter: '^dashboard_enabled: true$'
-    line: 'dashboard_namespace: kube-dashboard'
+    line: 'dashboard_namespace: kubernetes-dashboard'
 
 # ------------------- metrics ------------------- #
 - name: enable the metrics server

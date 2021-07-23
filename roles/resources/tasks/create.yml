@@ -1,4 +1,44 @@
 ---
+# ------------------- server ------------------- #
+- name: create a ssh key
+  hetzner.hcloud.hcloud_ssh_key:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ users | json_query('[*].name') | first }}"
+    public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+- name: create a network
+  hetzner.hcloud.hcloud_network:
+    api_token: "{{ hcloud_token }}"
+    name: network-1
+    ip_range: 10.0.0.0/16
+
+- name: create a subnetwork
+  hetzner.hcloud.hcloud_subnetwork:
+    api_token: "{{ hcloud_token }}"
+    network: network-1
+    ip_range: 10.0.0.0/24
+    network_zone: eu-central
+    type: cloud
+
+- name: create a server with ssh key
+  hetzner.hcloud.hcloud_server:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ item.name }}"
+    server_type: cx11
+    image: centos-8
+    location: hel1
+    ssh_keys: [ "{{ users | json_query('[*].name') | first }}" ]
+  loop: "{{ servers }}"
+  register: server
+
+- name: create a server network and specify the ip address
+  hetzner.hcloud.hcloud_server_network:
+    api_token: "{{ hcloud_token }}"
+    network: network-1
+    server: "{{ item.name }}"
+    ip: "{{ item.ip }}"
+  loop: "{{ servers }}"
+
 # ------------------- load balancer ------------------- #
 - name: create a load balancer
   hetzner.hcloud.hcloud_load_balancer:
@@ -77,46 +117,6 @@
     zone: "{{ vault_domain }}"
     type: A
     value: "{{ load_balancer_ipv4 }}"
-
-# ------------------- server ------------------- #
-- name: create a ssh key
-  hetzner.hcloud.hcloud_ssh_key:
-    api_token: "{{ hcloud_token }}"
-    name: "{{ users | json_query('[*].name') | first }}"
-    public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-
-- name: create a network
-  hetzner.hcloud.hcloud_network:
-    api_token: "{{ hcloud_token }}"
-    name: network-1
-    ip_range: 10.0.0.0/16
-
-- name: create a subnetwork
-  hetzner.hcloud.hcloud_subnetwork:
-    api_token: "{{ hcloud_token }}"
-    network: network-1
-    ip_range: 10.0.0.0/24
-    network_zone: eu-central
-    type: cloud
-
-- name: create a server with ssh key
-  hetzner.hcloud.hcloud_server:
-    api_token: "{{ hcloud_token }}"
-    name: "{{ item.name }}"
-    server_type: cx11
-    image: centos-8
-    location: hel1
-    ssh_keys: [ "{{ users | json_query('[*].name') | first }}" ]
-  loop: "{{ servers }}"
-  register: server
-
-- name: create a server network and specify the ip address
-  hetzner.hcloud.hcloud_server_network:
-    api_token: "{{ hcloud_token }}"
-    network: network-1
-    server: "{{ item.name }}"
-    ip: "{{ item.ip }}"
-  loop: "{{ servers }}"
 
 # ------------------- folders and files ------------------- #
 - name: create folders for inventory and group variables

@@ -122,5 +122,13 @@
     definition: "{{ item }}"
     validate:
       fail_on_error: yes
-  loop: "{{ lookup('template', 'ingress-nginx/kubernetes-dashboard.yml', split_lines=False) | from_yaml_all | list }}"
+  loop: "{{ lookup('template', 'kubernetes-dashboard/ingress.yml', split_lines=False) | from_yaml_all | list }}"
+  when: item is not none
+
+- name: create an admin user to access kubernetes dashboard
+  community.kubernetes.k8s:
+    definition: "{{ item }}"
+    validate:
+      fail_on_error: yes
+  loop: "{{ lookup('template', 'kubernetes-dashboard/rbac.yml', split_lines=False) | from_yaml_all | list }}"
   when: item is not none

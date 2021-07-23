@@ -53,26 +53,6 @@
     - group_vars
     - inventory
 
-# ------------------- server ------------------- #
-- name: delete a server
-  hetzner.hcloud.hcloud_server:
-    api_token: "{{ hcloud_token }}"
-    name: "{{ item.name }}"
-    state: absent
-  loop: "{{ servers }}"
-
-- name: delete a network
-  hetzner.hcloud.hcloud_network:
-    api_token: "{{ hcloud_token }}"
-    name: network-1
-    state: absent
-
-- name: delete a ssh_key
-  hetzner.hcloud.hcloud_ssh_key:
-    api_token: "{{ hcloud_token }}"
-    name: "{{ users | json_query('[*].name') | first }}"
-    state: absent
-
 # ------------------- cloudflare ------------------- #
 - name: gather hcloud load balancer infos
   hetzner.hcloud.hcloud_load_balancer_info:
@@ -100,3 +80,23 @@
     name: "{{ item.name }}"
     state: absent
   loop: "{{ load_balancers }}"
+
+# ------------------- server ------------------- #
+- name: delete a server
+  hetzner.hcloud.hcloud_server:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ item.name }}"
+    state: absent
+  loop: "{{ servers }}"
+
+- name: delete a network
+  hetzner.hcloud.hcloud_network:
+    api_token: "{{ hcloud_token }}"
+    name: network-1
+    state: absent
+
+- name: delete a ssh_key
+  hetzner.hcloud.hcloud_ssh_key:
+    api_token: "{{ hcloud_token }}"
+    name: "{{ users | json_query('[*].name') | first }}"
+    state: absent
