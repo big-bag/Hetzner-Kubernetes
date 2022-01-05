@@ -1,28 +1,94 @@
 ---
-- name: include a play to create a ssh key, servers and a load balancer
-  ansible.builtin.import_playbook: resources.yml
+- name: play to create resources such as a ssh key, servers and a load balancer
+  hosts: localhost
+  connection: local
+  become: no
+  gather_facts: no
+  roles:
+    - { role: resources/create }
+    - { role: resources/destroy, tags: [ "never", "destroy" ] }
+  post_tasks:
+    - name: refresh inventory to ensure instances exist in (or removed from) inventory
+      ansible.builtin.meta: refresh_inventory
 
-- name: include a play to create users and configure ssh; performed after the previous play, depends on it
-  ansible.builtin.import_playbook: connection.yml
+- name: play to configure connection parameters such as create users and configure ssh; depends on the previous play
+  hosts: hcloud
+  ignore_unreachable: yes
+  remote_user: "{% if hostvars['localhost']['server'].changed %}root{% else %}{{ users | json_query('[*].name') | first }}{% endif %}"
+  vars:
+    ansible_ssh_private_key_file: id_rsa
+    ansible_port: "{% if hostvars['localhost']['server'].changed %}22{% else %}{{ vault_ssh_port }}{% endif %}"
+  become: yes
+  gather_facts: no
+  pre_tasks:
+    - name: wait 40 seconds for target connection to become reachable/usable
+      ansible.builtin.wait_for_connection:
+        timeout: 40
+  roles:
+    - connection/users
+    - connection/sudo
+    - connection/ssh
+  post_tasks:
+    - name: bring host(-s) back to play after failure (e.g., if one host was unreachable)
+      ansible.builtin.meta: clear_host_errors
 
-- name: include a play to configure server security and common basic settings
-  ansible.builtin.import_playbook: base.yml
+- name: play to configure server security and basic configuration settings
+  hosts: hcloud
+  remote_user: "{{ users | json_query('[*].name') | first }}"
+  vars:
+    ansible_ssh_private_key_file: id_rsa
+    ansible_port: "{{ vault_ssh_port }}"
+  become: yes
+  gather_facts: no
+  roles:
+    - base/iptables
+    - base/2fa-google-auth
+    - base/2fa-1password
+    - base/sysctl
+    - base/upgrade
+    - base/timezone
+    - base/ntp
+    - base/git
+    - base/fish
 
-- name: include a play to prepare before deploy kubernetes
-  ansible.builtin.import_playbook: pre-kubespray.yml
+- name: play to prepare settings before deploying kubernetes
+  hosts: localhost
+  connection: local
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  become: no
+  gather_facts: no
+  roles:
+    - kubespray/pre-configuration
 
-- name: include a play to clear all existing facts of targetted hosts before deploy cluster
-  ansible.builtin.import_playbook: iptables-and-facts.yml
+- name: include a play to configure iptables and clear all existing facts of targetted hosts before deploying cluster
+  hosts: hcloud
+  remote_user: "{{ users | json_query('[*].name') | first }}"
+  vars:
+    ansible_ssh_private_key_file: id_rsa
+    ansible_port: "{{ vault_ssh_port }}"
+  become: yes
+  gather_facts: no
+  roles:
+    - base/iptables
+  tasks:
+    - name: clear gathered facts from all currently targeted hosts
+      ansible.builtin.meta: clear_facts
 
 - name: include kubespray tasks to deploy kubernetes; performed after the previous play, depends on pre-kubespray play
   ansible.builtin.import_playbook: submodules/kubespray/cluster.yml
   vars:
-    ansible_port: "{{ hostvars['localhost']['port'] }}"
-    ansible_user: "{{ hostvars['localhost']['user'] }}"
-    ansible_ssh_private_key_file: ~/.ssh/id_rsa
+    ansible_port: "{{ hostvars['localhost']['port'] | default('22') }}"
+    ansible_user: "{{ hostvars['localhost']['user'] | default('root') }}"
+    ansible_ssh_private_key_file: id_rsa
     ansible_become: yes
   tags:
     - "{{ hostvars['localhost']['tag'] | default('never') }}"
 
-- name: include a play to prepare use kubectl
-  ansible.builtin.import_playbook: post-kubespray.yml
+- name: play to prepare use kubectl and deploy workload to kubernetes
+  hosts: localhost
+  connection: local
+  become: no
+  gather_facts: no
+  roles:
+    - kubespray/post-configuration

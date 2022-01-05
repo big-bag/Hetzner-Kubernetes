@@ -1,0 +1,73 @@
+---
+# ------------------- artifacts ------------------- #
+- name: change controller host name to use the controller's public ip
+  ansible.builtin.replace:
+    path: inventory/artifacts/admin.conf
+    regexp: 'https:\/\/.*:6443'
+    replace: "https://{{ hostvars[groups['kube-master'][0]]['ipv4'] }}:6443"
+
+# ------------------- csi-driver ------------------- #
+- name: create a secret containing the token, fail on validation errors
+  kubernetes.core.k8s:
+    kubeconfig: inventory/artifacts/admin.conf
+    definition: "{{ lookup('template', 'csi-driver/secret.yml') | from_yaml }}"
+    validate:
+      fail_on_error: yes
+
+- name: deploy the csi driver
+  kubernetes.core.k8s:
+    kubeconfig: inventory/artifacts/admin.conf
+    definition: "{{ item }}"
+    validate:
+      fail_on_error: yes
+  loop: "{{ lookup('url', 'https://raw.githubusercontent.com/hetznercloud/csi-driver/v1.6.0/deploy/kubernetes/hcloud-csi.yml', split_lines=False) | from_yaml_all | list }}"
+  when: item is not none
+
+# ------------------- integration tools ------------------- #
+- name: create a secret containing hetzner cloud api token
+  kubernetes.core.k8s:
+    kubeconfig: inventory/artifacts/admin.conf
+    definition: "{{ lookup('template', 'integration-tools/secret.yml') | from_yaml }}"
+    validate:
+      fail_on_error: yes
+
+- name: integrate kubernetes cluster with the hetzner cloud api
+  kubernetes.core.k8s:
+    kubeconfig: inventory/artifacts/admin.conf
+    definition: "{{ item }}"
+    validate:
+      fail_on_error: yes
+  loop: "{{ lookup('url', 'https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml', split_lines=False) | from_yaml_all | list }}"
+  when: item is not none
+
+# ------------------- cert manager ------------------- #
+- name: create a secret containing cloudflare api token
+  kubernetes.core.k8s:
+    kubeconfig: inventory/artifacts/admin.conf
+    definition: "{{ lookup('template', 'cert-manager/secret.yml') | from_yaml }}"
+    validate:
+      fail_on_error: yes
+
+- name: create an acme issuer
+  kubernetes.core.k8s:
+    kubeconfig: inventory/artifacts/admin.conf
+    src: "{{ role_path }}/templates/cert-manager/issuer.yml"
+
+# ------------------- kubernetes dashboard ------------------- #
+- name: create an ingress resource to access kubernetes dashboard
+  kubernetes.core.k8s:
+    kubeconfig: inventory/artifacts/admin.conf
+    definition: "{{ item }}"
+    validate:
+      fail_on_error: yes
+  loop: "{{ lookup('template', 'kubernetes-dashboard/ingress.yml', split_lines=False) | from_yaml_all | list }}"
+  when: item is not none
+
+- name: create an admin user to access kubernetes dashboard
+  kubernetes.core.k8s:
+    kubeconfig: inventory/artifacts/admin.conf
+    definition: "{{ item }}"
+    validate:
+      fail_on_error: yes
+  loop: "{{ lookup('template', 'kubernetes-dashboard/rbac.yml', split_lines=False) | from_yaml_all | list }}"
+  when: item is not none
