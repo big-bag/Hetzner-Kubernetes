@@ -38,7 +38,7 @@
     chdir: "{{ playbook_dir }}/submodules/kubespray/"
   loop:
     - master
-    - release-2.17
+    - "{{ kubespray_branch }}"
   changed_when: false
 
 - name: switch to appropriate branch

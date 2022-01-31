@@ -10,6 +10,8 @@
       - google-authenticator
       - qrencode
     state: present
+  vars:
+    mitogen_task_isolation: fork
 
 - name: configure ssh to use the google authenticator pam module
   ansible.builtin.blockinfile:

@@ -18,6 +18,7 @@
   vars:
     ansible_ssh_private_key_file: id_rsa
     ansible_port: "{% if hostvars['localhost']['server'].changed %}22{% else %}{{ vault_ssh_port }}{% endif %}"
+    ansible_python_interpreter: /usr/bin/python3
   become: yes
   gather_facts: no
   pre_tasks:
@@ -32,7 +33,7 @@
     - name: bring host(-s) back to play after failure (e.g., if one host was unreachable)
       ansible.builtin.meta: clear_host_errors
 
-- name: play to configure server security and basic configuration settings
+- name: play to configure iptables
   hosts: hcloud
   remote_user: "{{ users | json_query('[*].name') | first }}"
   vars:
@@ -40,16 +41,28 @@
     ansible_port: "{{ vault_ssh_port }}"
   become: yes
   gather_facts: no
+  strategy: linear
   roles:
     - base/iptables
+
+- name: play to configure server security and basic configuration settings
+  hosts: hcloud
+  remote_user: "{{ users | json_query('[*].name') | first }}"
+  vars:
+    ansible_ssh_private_key_file: id_rsa
+    ansible_port: "{{ vault_ssh_port }}"
+    ansible_python_interpreter: /usr/bin/python3
+  become: yes
+  gather_facts: no
+  roles:
     - base/2fa-google-auth
     - base/2fa-1password
     - base/sysctl
-    - base/upgrade
     - base/timezone
     - base/ntp
     - base/git
     - base/fish
+    - base/upgrade
 
 - name: play to prepare settings before deploying kubernetes
   hosts: localhost
@@ -61,7 +74,7 @@
   roles:
     - kubespray/pre-configuration
 
-- name: include a play to configure iptables and clear all existing facts of targetted hosts before deploying cluster
+- name: play to configure iptables and clear all existing facts of targetted hosts before deploying cluster
   hosts: hcloud
   remote_user: "{{ users | json_query('[*].name') | first }}"
   vars:
@@ -69,19 +82,26 @@
     ansible_port: "{{ vault_ssh_port }}"
   become: yes
   gather_facts: no
+  strategy: linear
   roles:
     - base/iptables
   tasks:
+    # install dependency for submodules/kubespray/roles/download/tasks/extract_file.yml
+    - name: install dependency for unarchive module
+      ansible.builtin.dnf:
+        name: tar
+        state: present
     - name: clear gathered facts from all currently targeted hosts
       ansible.builtin.meta: clear_facts
 
-- name: include kubespray tasks to deploy kubernetes; performed after the previous play, depends on pre-kubespray play
+- name: include kubespray tasks to deploy kubernetes; depends on the two previous plays
   ansible.builtin.import_playbook: submodules/kubespray/cluster.yml
   vars:
     ansible_port: "{{ hostvars['localhost']['port'] | default('22') }}"
     ansible_user: "{{ hostvars['localhost']['user'] | default('root') }}"
     ansible_ssh_private_key_file: id_rsa
     ansible_become: yes
+    mitogen_task_isolation: fork
   tags:
     - "{{ hostvars['localhost']['tag'] | default('never') }}"
 

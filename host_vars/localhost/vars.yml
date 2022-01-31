@@ -51,3 +51,5 @@ users:
     comment: Example user
   - name:    sample_user
     comment: Sample user
+
+kubespray_branch: release-2.18

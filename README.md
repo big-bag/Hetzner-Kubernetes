@@ -8,16 +8,18 @@ git submodule update --init
 
 Build image
 ```
-docker build --rm --file Dockerfile --tag ansible:2.10.11 .
+docker build --rm --file Dockerfile --tag ansible:2.10.15 .
 ```
 
 # Write secrets to encrypted file
+
+Create Vault password file named `.vault_password` and add password into it
 
 Create encrypted file
 ```
 docker run --rm -ti \
     --volume=(pwd):/etc/ansible \
-    ansible:2.10.11 \
+    ansible:2.10.15 \
         ansible-vault create host_vars/localhost/vault.yml
 ```
 
@@ -25,7 +27,7 @@ Edit encrypted file
 ```
 docker run --rm -ti \
     --volume=(pwd):/etc/ansible \
-    ansible:2.10.11 \
+    ansible:2.10.15 \
         ansible-vault edit host_vars/localhost/vault.yml
 ```
 
@@ -51,7 +53,7 @@ docker run --rm -ti \
    - `vault_1password_vault_name` - vault to write secrets (will be created if doesn't exist)
 
 6. Generate token to access GitHub
-   - <Profile> -> Settings -> Developer settings -> Personal access tokens
+   - <GitHub_profile> -> Settings -> Developer settings -> Personal access tokens
    - Scopes: public_repo
    - Write username to variable `vault_github_username`
    - Write token to variable `vault_github_password`
@@ -73,7 +75,7 @@ Run playbook to install kubernetes cluster
 ```
 docker run --rm -t \
     --volume=(pwd):/etc/ansible \
-    ansible:2.10.11 \
+    ansible:2.10.15 \
         ansible-playbook site.yml
 ```
 
@@ -81,6 +83,6 @@ Run playbook to delete all resources
 ```
 docker run --rm -t \
     --volume=(pwd):/etc/ansible \
-    ansible:2.10.11 \
+    ansible:2.10.15 \
         ansible-playbook site.yml --tags "destroy"
 ```

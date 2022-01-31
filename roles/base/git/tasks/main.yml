@@ -17,10 +17,13 @@
   register: latest_version
   delegate_to: localhost
   changed_when: false
+  become: no
+  run_once: true
 
 - name: set latest version
   ansible.builtin.set_fact:
     latest_version: "{{ latest_version.stdout[2:][:-1] }}"
+  run_once: true
 
 - name: build git
   block:
@@ -37,11 +40,15 @@
           - libcurl-devel
           - expat-devel
         state: present
+      vars:
+        mitogen_task_isolation: fork
 
     - name: install the software that unarchive module depends on
       ansible.builtin.dnf:
         name: tar
         state: present
+      vars:
+        mitogen_task_isolation: fork
 
     - name: download git tarball
       ansible.builtin.unarchive:

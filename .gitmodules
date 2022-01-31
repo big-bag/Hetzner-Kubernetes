@@ -1,4 +1,4 @@
 [submodule "submodules/kubespray"]
 	path = submodules/kubespray
 	url = https://github.com/big-bag/kubespray.git
-	branch = release-2.17
+	branch = release-2.18
